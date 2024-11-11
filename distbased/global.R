@@ -14,7 +14,7 @@ add_busy_bar(color = "#FF0000",timeout=1000)
 allsites=readRDS("sites_table.RDS")
 
 # Register your Google Maps API key
-register_google(key = "AIzaSyCAXld-xHp2fE6QfAn94vtojVgERyNjuW8")#attention ac ma clef
+register_google(key = "AIzaSyCAXld-xHp2fE6QfAn94vtojVgERyNjuW8") #This API key won't work anymore
 
 conn <- init.conn() #if no parameters, you need our credential as environment variable, to put in .Renviron.
 
