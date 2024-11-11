@@ -1,6 +1,8 @@
 library(shiny)
+library(geosphere) # For calculating distances
 library(leaflet)
 library(ggmap)
+library(sf)
 library(shinyTree)
 library(data.tree)
 source("functions.R")
@@ -8,6 +10,8 @@ source("functions.database.connect.R")
 library(shinybusy)
 
 add_busy_bar(color = "#FF0000",timeout=1000)
+
+allsites=readRDS("sites_table.RDS")
 
 # Register your Google Maps API key
 register_google(key = "AIzaSyCAXld-xHp2fE6QfAn94vtojVgERyNjuW8")#attention ac ma clef

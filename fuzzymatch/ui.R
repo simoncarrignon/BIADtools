@@ -3,16 +3,14 @@ library(leaflet)
 library(shinyTree)
 
 shinyUI(fluidPage(
-  titlePanel("Distance based exploration"),
+  titlePanel("Let's dig BIAD a bit..."),
   
   sidebarLayout(
     sidebarPanel(
-      textInput("name", "Enter Name (optional):", ""),
-      numericInput("latitude", "Latitude:", value = NULL, step = 0.0001),
-      numericInput("longitude", "Longitude:", value = NULL, step = 0.0001),
+      selectInput("table", "In which table is the element you are looking for?", choices = get_table_list(conn)),
+      uiOutput("fields_ui"),
+      textInput("location", "Enter a string to match:", ""),
       actionButton("find_matches", "Find Matches"),
-      hr(),
-      sliderInput("distance", "Distance (D) in km:", min = 1, max = 100, value = 10, step = 1),
       hr(),
       h4("Sites Found"),
       uiOutput("key_buttons"), # Output for clickable primary key buttons
