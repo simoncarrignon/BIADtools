@@ -11,12 +11,14 @@ library(shinybusy)
 add_busy_bar(color = "#FF0000",timeout=1000)
 
 # Register your Google Maps API key
-allsites=readRDS("sites_table.RDS")
+allsites=readRDS(here::here("data","sites_table.RDS"))
 
 # Register your Google Maps API key
 register_google(key = Sys.getenv("GMAP_API"))#attention ac ma clef
 
 conn <- init.conn()
+
+coords <- cbind(allsites$Longitude, allsites$Latitude)
 
 # Function to get the list of tables from the database
 get_table_list <- function(conn) {
