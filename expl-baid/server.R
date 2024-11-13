@@ -38,6 +38,7 @@ shinyServer(function(input, output, session) {
 
   userCoords <- reactiveVal(NULL)  # Hold the user coordinates
   output$map <- renderLeaflet({
+      print("nniee")
     leaflet() |>
       addTiles() |>
       setView(lng = 10, lat = 50, zoom = 4)
@@ -63,7 +64,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$find_matches, {
     output$siteTree <- renderTree(NULL)
     output$key_buttons <- renderUI(NULL)
-    leafletProxy("map", data = df) |> clearMarkers()
+    leafletProxy("map",session, data = df) |> clearMarkers()
     location <- input$location
     selected_table <- input$table
     selected_field <- input$field
@@ -144,15 +145,16 @@ shinyServer(function(input, output, session) {
 print(sum(distances <= input$distance * 1000))
         result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
         print(paste("d:",input$distance," nrow:",nrow(result),",",nrow(allsites)))
-        leafletProxy("map") |>
-           setView(lng = user_coords["Longitude"], lat = user_coords["Latitude"], zoom = 15) |>
-           addCircleMarkers(lng = user_coords["Longitude"], lat = user_coords["Latitude"], popup = "POI", color = "green")
-        leafletProxy("map") |>
+# Helper function to calculate offset in degrees from a central point based on a distance in meters
+        leafletProxy("map",session) |>
+           addCircleMarkers(lng = user_coords["Longitude"], lat = user_coords["Latitude"], popup = "POI", color = "green") |>
+    #fitBounds(lng1 = lng_min, lat1 = lat_min, lng2 = lng_max, lat2 = lat_max) |>
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
                        radius = input$distance * 1000, weight = 1, color = "#FF0000"
-            ) 
+            ) |>
+           setView(lat = as.numeric(user_coords["Latitude"]),lng = as.numeric(user_coords["Longitude"]), zoom=10) 
         if(nrow(result)>0){
             updateSitesOnMap(result)
             # Iterate over each primary key
@@ -249,13 +251,14 @@ print(sum(distances <= input$distance * 1000))
       user_coords <- userCoords()
       print(user_coords)
       if(is.null(user_coords)) return()()
-      leafletProxy("map") |>
+      leafletProxy("map",session) |>
         removeShape(layerId = "search_zone") |>  # Remove the existing circular area
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
                        radius = input$distance * 1000, weight = 1, color = "#FF0000"
-            ) 
+            ) |>
+           setView(lat = as.numeric(user_coords["Latitude"]),lng = as.numeric(user_coords["Longitude"]), zoom=10) 
       distances <- distm(x = coords, y = user_coords, fun = distHaversine)
       result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
       if(nrow(result)>0){
