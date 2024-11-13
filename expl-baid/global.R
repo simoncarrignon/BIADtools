@@ -11,7 +11,7 @@ library(shinybusy)
 add_busy_bar(color = "#FF0000",timeout=1000)
 
 # Register your Google Maps API key
-allsites=readRDS(here::here("data","sites_table.RDS"))
+allsites=readRDS("../data/sites_table.RDS")
 
 # Register your Google Maps API key
 register_google(key = Sys.getenv("GMAP_API"))#attention ac ma clef
@@ -30,3 +30,5 @@ get_table_list <- function(conn) {
 get_field_list <- function(conn, table) {
     DBI::dbListFields(conn, table)
 }
+
+tables <- get_table_list(conn)

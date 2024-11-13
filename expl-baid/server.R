@@ -27,25 +27,23 @@ updateSitesOnMap <- function(df,  key = NULL){
 
     leafletProxy("map", data = df) |>
         clearMarkers() |>
-        addCircleMarkers(layerId=df$SiteID,lng = as.numeric(df$Longitude), lat = as.numeric(df$Latitude), popup = paste(df$SiteID,":",df$SiteName,",",df$notes," last update:",df$time_last_update),color=colors)
+        addCircleMarkers(layerId=df$SiteID,lng = as.numeric(df$Longitude), lat = as.numeric(df$Latitude), popup = paste(df$SiteID,":",df$SiteName,",",df$notes," last update:",df$time_last_update),color=colors) |>
+    fitBounds(lng1 = min(as.numeric(df$Longitude)),lng2 = max(as.numeric(df$Longitude)),lat1 = min(as.numeric(df$Latitude)),lat2 = max(as.numeric(df$Latitude)))
+    print(max(as.numeric(df$Latitude)))
 }
 
-clearMap <- function(){
-    leafletProxy("map", data = df) |> clearMarkers()
+resetMap <- function(){
+    leafletProxy("map") |> clearMarkers() |> clearShapes() |> setView(lng = 10, lat = 50, zoom = 4)
 }
 
 shinyServer(function(input, output, session) {
 
   userCoords <- reactiveVal(NULL)  # Hold the user coordinates
   output$map <- renderLeaflet({
-      print("nniee")
-    leaflet() |>
-      addTiles() |>
-      setView(lng = 10, lat = 50, zoom = 4)
+    leaflet() |> addTiles() |> setView(lng = 10, lat = 50, zoom = 4)
   })
 
   observe({
-    tables <- get_table_list(conn)
     tables <- c("Sites", tables[tables != "Sites"])  # Start with "Sites" and append other tables
     updateSelectInput(session, "table", choices = tables)
   })
@@ -62,9 +60,10 @@ shinyServer(function(input, output, session) {
 
   # Logic triggered by Find Matches button
   observeEvent(input$find_matches, {
+                   print("sim")
     output$siteTree <- renderTree(NULL)
     output$key_buttons <- renderUI(NULL)
-    leafletProxy("map",session, data = df) |> clearMarkers()
+    resetMap()
     location <- input$location
     selected_table <- input$table
     selected_field <- input$field
@@ -72,6 +71,7 @@ shinyServer(function(input, output, session) {
     result <- NULL
     
     if (nchar(location) > 0 && !is.null(selected_table) && !is.null(selected_field)) {
+                   print("sim2")
       # Construct a SQL query with the selected field and location
       query <- paste0("SELECT * FROM ",selected_table," WHERE ",selected_field," LIKE '%",location,"%'")
       print(query)
@@ -92,7 +92,6 @@ shinyServer(function(input, output, session) {
         result <- resultData()
         if (!is.null(result) && nrow(result) > 0 ) {
             if(selected_table == "Sites"){
-                #output$map <- renderSitesOnMap(result)
                 updateSitesOnMap(result)
             }
             else{
@@ -101,17 +100,17 @@ shinyServer(function(input, output, session) {
 				sites <- t(sapply(sites,function(i)i[,c("SiteID","SiteName","Latitude","Longitude")]))
 				sites <- cbind.data.frame(sites, notes=paste0(primaryKey,": ",result[,primaryKey],","))
 				print(sites)
-                #output$map <- renderSitesOnMap(sites)
                 updateSitesOnMap(sites)
 			}
+
         } else {
           # Optionally provide feedback if there are no results to show
-          output$selTxt <- renderPrint({ "No results to show on map" })
+          output$selTxt <- renderPrint(print( "No results to show on map" ))
         }
       } else {
         resultData(NULL)  # Clear reactive value
-        output$selTxt <- renderPrint("No results found")
-        output$key_buttons <- renderPrint("No results found")
+        output$selTxt <- renderPrint(print("No results found"))
+        output$key_buttons <- renderPrint(print("No results found"))
       }
     }
   })
@@ -142,19 +141,16 @@ shinyServer(function(input, output, session) {
         }
         userCoords(user_coords)  # Update result data
         distances <- distm(x = coords, y = user_coords, fun = distHaversine)
-print(sum(distances <= input$distance * 1000))
         result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
-        print(paste("d:",input$distance," nrow:",nrow(result),",",nrow(allsites)))
-# Helper function to calculate offset in degrees from a central point based on a distance in meters
         leafletProxy("map",session) |>
            addCircleMarkers(lng = user_coords["Longitude"], lat = user_coords["Latitude"], popup = "POI", color = "green") |>
-    #fitBounds(lng1 = lng_min, lat1 = lat_min, lng2 = lng_max, lat2 = lat_max) |>
-            addCircles(
-                       layerId="search_zone",
-                       lng = user_coords["Longitude"], lat = user_coords["Latitude"],
-                       radius = input$distance * 1000, weight = 1, color = "#FF0000"
-            ) |>
-           setView(lat = as.numeric(user_coords["Latitude"]),lng = as.numeric(user_coords["Longitude"]), zoom=10) 
+           #fitBounds(lng1 = lng_min, lat1 = lat_min, lng2 = lng_max, lat2 = lat_max) |>
+           addCircles(
+                      layerId="search_zone",
+                      lng = user_coords["Longitude"], lat = user_coords["Latitude"],
+                      radius = input$distance * 1000, weight = 1, color = "#FF0000"
+           ) |>
+           setView(lat = as.numeric(user_coords["Latitude"]),lng = as.numeric(user_coords["Longitude"]), zoom=8) 
         if(nrow(result)>0){
             updateSitesOnMap(result)
             # Iterate over each primary key
@@ -169,11 +165,12 @@ print(sum(distances <= input$distance * 1000))
   })
 
   observe({ 
+      req(resultData())
       result <- resultData()
       click <- input$map_marker_click
       if(is.null(click)) return()
       x <- run.searcher(table.name = input$table, primary.value = click$id, conn = conn, direction = "down")$down
-      #updateSitesOnMap(result,click$id)
+      updateSitesOnMap(result,click$id)
       get_json <- reactive({
           treeToJSON(FromListSimple(x), pretty = TRUE)
       })
@@ -252,21 +249,22 @@ print(sum(distances <= input$distance * 1000))
       print(user_coords)
       if(is.null(user_coords)) return()()
       leafletProxy("map",session) |>
-        removeShape(layerId = "search_zone") |>  # Remove the existing circular area
+        removeShape(layerId = "search_zone") |>  
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
                        radius = input$distance * 1000, weight = 1, color = "#FF0000"
-            ) |>
-           setView(lat = as.numeric(user_coords["Latitude"]),lng = as.numeric(user_coords["Longitude"]), zoom=10) 
+            ) 
       distances <- distm(x = coords, y = user_coords, fun = distHaversine)
       result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
+      print(result)
       if(nrow(result)>0){
+         resultData(result)  # Update reactive value
           updateSitesOnMap(result)
           output$key_buttons <- renderUI({
               lapply(result[, "SiteID"], function(key) {
-                         actionButton(inputId = paste0("key_", key), label = key)
-                    })
+                  actionButton(inputId = paste0("key_", key), label = key)
+              })
           })
       }
   })
