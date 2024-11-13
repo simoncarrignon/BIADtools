@@ -139,13 +139,13 @@ shinyServer(function(input, output, session) {
             print("fromm lonlat")
             user_coords <- c(Longitude=input$longitude,Latitude=input$latitude)
         }
-        coords <- cbind(allsites$Longitude, allsites$Latitude)
         userCoords(user_coords)  # Update result data
         distances <- distm(x = coords, y = user_coords, fun = distHaversine)
 print(sum(distances <= input$distance * 1000))
         result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
         print(paste("d:",input$distance," nrow:",nrow(result),",",nrow(allsites)))
         leafletProxy("map") %>%
+           setView(lng = user_coords["Longitude"], lat = user_coords["Latitude"], zoom = 15) %>%
            addCircleMarkers(lng = user_coords["Longitude"], lat = user_coords["Latitude"], popup = "POI", color = "green")
         leafletProxy("map") %>%
             addCircles(
@@ -250,12 +250,22 @@ print(sum(distances <= input$distance * 1000))
       print(user_coords)
       if(is.null(user_coords)) return()()
       leafletProxy("map") %>%
-        clearShapes(layerId = "search_zone") %>%  # Remove the existing circular area
+        removeShape(layerId = "search_zone") %>%  # Remove the existing circular area
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
                        radius = input$distance * 1000, weight = 1, color = "#FF0000"
             ) 
+      distances <- distm(x = coords, y = user_coords, fun = distHaversine)
+      result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
+      if(nrow(result)>0){
+          updateSitesOnMap(result)
+          output$key_buttons <- renderUI({
+              lapply(result[, "SiteID"], function(key) {
+                         actionButton(inputId = paste0("key_", key), label = key)
+                    })
+          })
+      }
   })
 
 
