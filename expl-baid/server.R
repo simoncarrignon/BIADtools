@@ -144,10 +144,10 @@ shinyServer(function(input, output, session) {
 print(sum(distances <= input$distance * 1000))
         result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
         print(paste("d:",input$distance," nrow:",nrow(result),",",nrow(allsites)))
-        leafletProxy("map") %>%
-           setView(lng = user_coords["Longitude"], lat = user_coords["Latitude"], zoom = 15) %>%
+        leafletProxy("map") |>
+           setView(lng = user_coords["Longitude"], lat = user_coords["Latitude"], zoom = 15) |>
            addCircleMarkers(lng = user_coords["Longitude"], lat = user_coords["Latitude"], popup = "POI", color = "green")
-        leafletProxy("map") %>%
+        leafletProxy("map") |>
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
@@ -249,8 +249,8 @@ print(sum(distances <= input$distance * 1000))
       user_coords <- userCoords()
       print(user_coords)
       if(is.null(user_coords)) return()()
-      leafletProxy("map") %>%
-        removeShape(layerId = "search_zone") %>%  # Remove the existing circular area
+      leafletProxy("map") |>
+        removeShape(layerId = "search_zone") |>  # Remove the existing circular area
             addCircles(
                        layerId="search_zone",
                        lng = user_coords["Longitude"], lat = user_coords["Latitude"],
