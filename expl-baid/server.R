@@ -29,7 +29,6 @@ updateSitesOnMap <- function(df,  key = NULL){
         clearMarkers() |>
         addCircleMarkers(layerId=df$SiteID,lng = as.numeric(df$Longitude), lat = as.numeric(df$Latitude), popup = paste(df$SiteID,":",df$SiteName,",",df$notes," last update:",df$time_last_update),color=colors) |>
     fitBounds(lng1 = min(as.numeric(df$Longitude)),lng2 = max(as.numeric(df$Longitude)),lat1 = min(as.numeric(df$Latitude)),lat2 = max(as.numeric(df$Latitude)))
-    print(max(as.numeric(df$Latitude)))
 }
 
 resetMap <- function(){
@@ -37,6 +36,7 @@ resetMap <- function(){
 }
 
 shinyServer(function(input, output, session) {
+  print(Sys.time())
 
   userCoords <- reactiveVal(NULL)  # Hold the user coordinates
   output$map <- renderLeaflet({
@@ -60,7 +60,6 @@ shinyServer(function(input, output, session) {
 
   # Logic triggered by Find Matches button
   observeEvent(input$find_matches, {
-                   print("sim")
     output$siteTree <- renderTree(NULL)
     output$key_buttons <- renderUI(NULL)
     resetMap()
@@ -71,7 +70,6 @@ shinyServer(function(input, output, session) {
     result <- NULL
     
     if (nchar(location) > 0 && !is.null(selected_table) && !is.null(selected_field)) {
-                   print("sim2")
       # Construct a SQL query with the selected field and location
       query <- paste0("SELECT * FROM ",selected_table," WHERE ",selected_field," LIKE '%",location,"%'")
       print(query)
@@ -99,7 +97,6 @@ shinyServer(function(input, output, session) {
 
 				sites <- t(sapply(sites,function(i)i[,c("SiteID","SiteName","Latitude","Longitude")]))
 				sites <- cbind.data.frame(sites, notes=paste0(primaryKey,": ",result[,primaryKey],","))
-				print(sites)
                 updateSitesOnMap(sites)
 			}
 
@@ -170,7 +167,7 @@ shinyServer(function(input, output, session) {
       click <- input$map_marker_click
       if(is.null(click)) return()
       x <- run.searcher(table.name = input$table, primary.value = click$id, conn = conn, direction = "down")$down
-      updateSitesOnMap(result,click$id)
+      #updateSitesOnMap(result,click$id)
       get_json <- reactive({
           treeToJSON(FromListSimple(x), pretty = TRUE)
       })
@@ -246,7 +243,6 @@ shinyServer(function(input, output, session) {
   })
   observeEvent(input$distance, {
       user_coords <- userCoords()
-      print(user_coords)
       if(is.null(user_coords)) return()()
       leafletProxy("map",session) |>
         removeShape(layerId = "search_zone") |>  
@@ -257,7 +253,6 @@ shinyServer(function(input, output, session) {
             ) 
       distances <- distm(x = coords, y = user_coords, fun = distHaversine)
       result <- allsites[distances <= input$distance * 1000, ,drop=F] # Convert km to meters
-      print(result)
       if(nrow(result)>0){
          resultData(result)  # Update reactive value
           updateSitesOnMap(result)

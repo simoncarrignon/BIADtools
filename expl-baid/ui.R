@@ -25,12 +25,10 @@ shinyUI(fluidPage(
            sliderInput("distance", "Distance (D) in km:", min = 1, max = 100, value = 10, step = 1)
         )
       ),
-
         hr(),
         uiOutput("key_buttons"), # Output for clickable primary key buttons
         textOutput("downtree"),
-        shinyTree("siteTree"),
-        "Further (if any) information below"
+        shinyTree("siteTree")
     ),      
     
     mainPanel(
