@@ -118,18 +118,7 @@ run.server.query.inner.alt <- function(scriptname){
 }
 #--------------------------------------------------------------------------------------------------
 query.database <- function(sql.command, conn=NULL, db.credentials=NULL, wait = 0){
-    #print(sql.command)
-    if(is.null(conn) || !DBI::dbIsValid(conn) ){ #check if no connector has been provided, or if the connector doesnt work
-        #print("no connector provided, creating one here connecting ")
-        if(exists("conn", envir = .GlobalEnv))conn <- get("conn", envir = .GlobalEnv) #check if a connector already exist at global level
-        if(is.null(conn) || !DBI::dbIsValid(conn) ){
-            #print("the global connector is not good, delete and retry ")
-            disco <- disconnect()
-            conn <- init.conn(db.credentials=db.credentials)
-            assign("conn",conn,envir = .GlobalEnv)
-        }
-        #else{ print("connector exist at global, continue with it")}
-    }
+    check.conn(conn, db.credentials=NULL)
     #else{ print("connector provided")}
 	for(n in 1:length(sql.command)) {
         if(wait>0)Sys.sleep(wait)
@@ -143,6 +132,19 @@ query.database <- function(sql.command, conn=NULL, db.credentials=NULL, wait = 0
     DBI::dbClearResult(res)
 	query <- encoder(query)
     return(query)
+}
+#--------------------------------------------------------------------------------------------------
+check.conn <- (conn = NULL, db.credentials=NULL){
+    if(is.null(conn) || !tryCatch(DBI::dbIsValid(conn),error=function(err)FALSE) ){ #check if no connector has been provided, or if the connector doesnt work
+        #print("no connector provided, creating one here connecting ")
+        if(exists("conn", envir = .GlobalEnv))conn <- get("conn", envir = .GlobalEnv) #check if a connector already exist at global level
+        if(is.null(conn) || !tryCatch(DBI::dbIsValid(conn),error=function(err)FALSE) ){
+            #print("the global connector is not good, delete and retry ")
+            disco <- disconnect()
+            conn <- init.conn(db.credentials=db.credentials)
+            assign("conn",conn,envir = .GlobalEnv)
+        }
+    }
 }
 #--------------------------------------------------------------------------------------------------
 encoder <- function(df){
