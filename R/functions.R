@@ -108,18 +108,18 @@ return(tables)}
 #----------------------------------------------------------------------------------------------------
 get.child.relationships <- function(keys, table.name, primary.value, conn = NULL, db.credentials = NULL){
 	primary.data <- get.table.data(keys, table.name, primary.value, conn = conn, db.credentials = db.credentials)
-	primary.column <- get.primary.column.from.table(keys, table.name)
+	primary.column <- get.primary.column.from.table(keys, table.name, conn = conn, db.credentials = db.credentials)
 	res <- subset(keys, REFERENCED_COLUMN_NAME==primary.column & REFERENCED_TABLE_NAME==table.name)
 return(res)}
 #----------------------------------------------------------------------------------------------------
 get.parent.relationships <- function(keys, table.name, primary.value, conn = NULL, db.credentials = NULL){
 	primary.data <- get.table.data(keys, table.name, primary.value, conn = conn, db.credentials = db.credentials)
-	primary.column <- get.primary.column.from.table(keys, table.name)
+	primary.column <- get.primary.column.from.table(keys, table.name, conn = conn, db.credentials = db.credentials)
 	res <- subset(keys, TABLE_NAME==table.name & grepl('FK_',CONSTRAINT_NAME))
 return(res)}
 #----------------------------------------------------------------------------------------------------
-get.primary.column.from.table <- function(keys = NULL, table.name){
-    if(is.null(keys))keys <- get.keys()
+get.primary.column.from.table <- function(keys = NULL, table.name, conn = NULL, db.credentials = NULL){
+    if(is.null(keys))keys <- get.keys(conn = conn, db.credentials = db.credentials )
 	x <- subset(keys, TABLE_NAME == table.name & CONSTRAINT_NAME %in% c('unique','PRIMARY'))$COLUMN_NAME
 	column <- x[duplicated(x)]
 	if(length(column)==0)column <- NA
@@ -128,7 +128,7 @@ return(column)}
 #----------------------------------------------------------------------------------------------------
 get.table.data <- function(keys, table.name, primary.value, conn = NULL, db.credentials = NULL){
 	if(length(primary.value)!=1)stop('provide a single primary value')
-	primary.column <- get.primary.column.from.table(keys, table.name)
+	primary.column <- get.primary.column.from.table(keys, table.name, conn = conn, db.credentials = db.credentials)
 	sql.command <- paste("SELECT * FROM `BIAD`.`",table.name,"` WHERE ",primary.column," IN ('",primary.value,"')", sep='')
 	data <- query.database(conn = conn, db.credentials = db.credentials, sql.command = sql.command)
 	data <- remove.blank.columns.from.table(data)
@@ -199,7 +199,7 @@ wrapper <- function(keys, table.data, fnc, conn = NULL, db.credentials = NULL){
 	for(n in 1:N){
 		rel <- table.data[n]	
 		table.name <- names(rel)
-		col <- get.primary.column.from.table(keys, table.name=table.name)
+		col <- get.primary.column.from.table(keys, table.name=table.name, conn = conn, db.credentials = db.credentials)
 		rel.values <- rel[[table.name]]$data[[col]]
 		for(rel in rel.values){
 
@@ -219,8 +219,7 @@ return(tb)}
 #----------------------------------------------------------------------------------------------------
 get.related.data <- function(table.name, primary.value, fnc, conn = NULL, db.credentials = NULL){
 
-	sql.command <- "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA='BIAD'"
-	keys <- query.database(conn = conn, db.credentials = db.credentials, sql.command = sql.command)
+	keys <- get.keys(conn = conn, db.credentials = db.credentials)
 
 	# table data
 	all.data <- list()
