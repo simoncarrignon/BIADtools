@@ -118,8 +118,8 @@ run.server.query.inner.alt <- function(scriptname){
 }
 #--------------------------------------------------------------------------------------------------
 query.database <- function(sql.command, conn=NULL, db.credentials=NULL, wait = 0){
-    check.conn(conn, db.credentials=NULL)
-    #else{ print("connector provided")}
+    check.conn(conn = conn, db.credentials = db.credentials)
+    if(is.null(conn))get("conn",envir = .GlobalEnv)
 	for(n in 1:length(sql.command)) {
         if(wait>0)Sys.sleep(wait)
         res <- tryCatch(suppressWarnings(DBI::dbSendStatement(conn,sql.command[n])),
@@ -134,7 +134,7 @@ query.database <- function(sql.command, conn=NULL, db.credentials=NULL, wait = 0
     return(query)
 }
 #--------------------------------------------------------------------------------------------------
-check.conn <- (conn = NULL, db.credentials=NULL){
+check.conn <- function(conn = NULL, db.credentials=NULL){
     if(is.null(conn) || !tryCatch(DBI::dbIsValid(conn),error=function(err)FALSE) ){ #check if no connector has been provided, or if the connector doesnt work
         #print("no connector provided, creating one here connecting ")
         if(exists("conn", envir = .GlobalEnv))conn <- get("conn", envir = .GlobalEnv) #check if a connector already exist at global level
