@@ -53,11 +53,6 @@ run.server.query.inner <- function(db.credentials=NULL, hostuser=NULL, hostname=
 
 	# create bash commands to be run on server
     tmp.path <- tempfile(pattern = "tmpdir")
-	commands <- c(
-		paste("cd",tmp.path),
-		paste(env_vars,"/Library/Frameworks/R.framework/Resources/bin/R CMD BATCH --no-save server.script.R tmp.Rout"),
-		"cd .."
-		)
 
 	# ssh onto server, copy required files to server, tell server to run R, copy results back to local 
 	session <- ssh::ssh_connect(host=paste(hostuser,"@",hostname,sep=''), keyfile=pempath)
@@ -117,34 +112,33 @@ run.server.query.inner.alt <- function(scriptname){
     }
 }
 #--------------------------------------------------------------------------------------------------
-query.database <- function(sql.command, conn=NULL, db.credentials=NULL, wait = 0){
-    check.conn(conn = conn, db.credentials = db.credentials)
-    if(is.null(conn))get("conn",envir = .GlobalEnv)
+query.database <- function(sql.command, conn=NULL, db.credentials=NULL){
+    if(is.null(conn) || !DBI::dbIsValid(conn) ){ #check if no connector has been provided, or if the connector doesnt work
+        #print("no connector provided, creating one here connecting ")
+        if(exists("conn", envir = .GlobalEnv))conn <- get("conn", envir = .GlobalEnv) #check if a connector already exist at global level
+        if(is.null(conn) || !DBI::dbIsValid(conn) ){
+            #print("the global connector is not good, delete and retry ")
+            disco <- disconnect()
+            conn <- init.conn(db.credentials=db.credentials)
+            assign("conn",conn,envir = .GlobalEnv)
+        }
+        #else{ print("connector exist at global, continue with it")}
+    }
+    #else{ print("connector provided")}
 	for(n in 1:length(sql.command)) {
-        if(wait>0)Sys.sleep(wait)
         res <- tryCatch(suppressWarnings(DBI::dbSendStatement(conn,sql.command[n])),
                     error=function(e){
                         print(e)
-                        stop("error while sending command:",sql.command[n])
+						disco <- disconnect()
+						conn <- init.conn(db.credentials=db.credentials)
+						assign("conn",conn,envir = .GlobalEnv)
+                        stop("error while sending command: ",sql.command[n], "\n Starting a new connection: you will need to re-run your last command.")
                     })
     }
 	query <- fetch(res, n= -1)
     DBI::dbClearResult(res)
 	query <- encoder(query)
     return(query)
-}
-#--------------------------------------------------------------------------------------------------
-check.conn <- function(conn = NULL, db.credentials=NULL){
-    if(is.null(conn) || !tryCatch(DBI::dbIsValid(conn),error=function(err)FALSE) ){ #check if no connector has been provided, or if the connector doesnt work
-        #print("no connector provided, creating one here connecting ")
-        if(exists("conn", envir = .GlobalEnv))conn <- get("conn", envir = .GlobalEnv) #check if a connector already exist at global level
-        if(is.null(conn) || !tryCatch(DBI::dbIsValid(conn),error=function(err)FALSE) ){
-            #print("the global connector is not good, delete and retry ")
-            disco <- disconnect()
-            conn <- init.conn(db.credentials=db.credentials)
-            assign("conn",conn,envir = .GlobalEnv)
-        }
-    }
 }
 #--------------------------------------------------------------------------------------------------
 encoder <- function(df){
@@ -204,7 +198,7 @@ init.conn <- function(db.credentials=NULL){
             db.credentials$BIAD_DB_USER <- get("user", envir = .GlobalEnv)
             db.credentials$BIAD_DB_PASS <- get("password", envir = .GlobalEnv)
             db.credentials$BIAD_DB_HOST <- "127.0.0.1"
-            db.credentials$BIAD_DB_PORT <- 3307
+            db.credentials$BIAD_DB_PORT <- 3306
         } 
     }
     missing_vars <- names(db.credentials)[sapply(db.credentials, function(x) is.null(x) || is.na(x) || x == "")]
@@ -220,8 +214,8 @@ init.conn <- function(db.credentials=NULL){
             message("Note: you can only connect to the dataset through ssh ; so you may want to check you're ssh tunel (or any plugin you may use to do so) is working (cf:https://biadwiki.org/en/Connect)")
             stop("DBConnection fail")
     })
-    DBI::dbSendQuery(conn, 'set character set "utf8"')
-    DBI::dbSendQuery(conn, 'SET NAMES utf8')
+	DBI::dbSendQuery(conn, 'set character set "utf8"')
+	DBI::dbSendQuery(conn, 'SET NAMES utf8')
     return(conn)	
 }
 #--------------------------------------------------------------------------------------------------
@@ -235,4 +229,8 @@ msp <- function(password) {
     paste0(maskp[1], paste0(rep("*", length(maskp) - 2), collapse = ""), maskp[length(maskp)])
 }
 
-disconnect <- function(drv="MySQL") sapply(DBI::dbListConnections(DBI::dbDriver(drv)),DBI::dbDisconnect)
+disconnect <- function(drv="MySQL"){
+    require(RMySQL)
+    sapply(DBI::dbListConnections(DBI::dbDriver(drv)),DBI::dbDisconnect)
+}
+#--------------------------------------------------------------------------------------------------
