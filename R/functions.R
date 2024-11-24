@@ -5,37 +5,15 @@
 #----------------------------------------------------------------------------------------------------
 source("https://raw.githubusercontent.com/BIADwiki/BIADwiki/main/R/functions.database.connect.R")
 source("https://raw.githubusercontent.com/AdrianTimpson/snippets/main/R/functions.R")
-
-list.of.packages <- c('ps','tools','DBI','RMySQL')
-new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
 #----------------------------------------------------------------------------------------------------
-run.server.searcher <- function(table.name, primary.value, db.credentials=NULL, hostuser=NULL, hostname=NULL, pempath=NULL){	
-	text <- c(
-		"source('functions.R')",
-		"source('functions.database.connect.R')",
-		paste("table.name <- '",table.name,"'",sep=''),
-		paste("primary.value <- '",primary.value,"'",sep=''),
-        "conn <- init.conn()", ##credendtial will be passed through env variable so they don't need to be written anywhere
-		"down <- get.related.data(table.name, primary.value, fnc = decendants, conn = conn)",
-		"up <- get.related.data(table.name, primary.value, fnc = ancestors, conn = conn)",
-		"query <- list(down=down,up=up)",
-		"save(query, file='tmp.RData')",
-		"DBI::dbDisconnect(conn)"
-		)
-	writeLines(text,con= 'server.script.R')
-	query <- run.server.query.inner(db.credentials=db.credentials, hostuser=hostuser, hostname=hostname, pempath=pempath)
-return(query)}
-
-#----------------------------------------------------------------------------------------------------
-#Create a function that use the remote connection to the database to do the search
+# searhes for all directly related data
 run.searcher <- function(table.name, primary.value, conn = NULL, db.credential = NULL, direction = NULL){
-    if(is.null(conn)) conn <- check.conn() # du to the way these functions are handled by this searcher, we can't avoid passing the connecter explictly, so if it hasn't been done then we should create one.
-    if(is.null(direction))  directions  <- list(down = 'decendants', up = 'ancestors')
-    else if(direction == "down") directions  <- list(down = 'decendants')
-    else if(direction == "up") directions  <- list(up = 'ancestors')
+	if(is.null(conn)) conn <- check.conn() # due to the way these functions are handled by this searcher, we can't avoid passing the connecter explictly, so if it hasn't been done then we should create one.
+	if(is.null(direction))  directions  <- list(down = 'decendants', up = 'ancestors')
+	else if(direction == "down") directions  <- list(down = 'decendants')
+	else if(direction == "up") directions  <- list(up = 'ancestors')
 	lapply(directions,function(fn)  get.related.data(table.name, primary.value, fnc = get(fn) , conn = conn , db.credential = db.credential))
-}
+	}
 #----------------------------------------------------------------------------------------------------
 create.markdown.for.single.table <- function(d.tables, d.cols, table.name){
 	
@@ -559,14 +537,19 @@ get.ancestors <- function(keys, table.name, primary.value, conn = NULL, db.crede
 #' This function retrieves the sizes of BIAD, to help figuring out which dockers to use
 #'
 #' @param conn A database connection object. Default is `NULL`.
-#' @param db.credential Unused parameter for database credentials. Default is `NULL`.
+#' @param db.credential manually pass database credentials. Default is `NULL`.
+#' @param db name of the database to be returned
 #'
 #' @return A data frame with the database sizes in gigabytes.
 #' @export
-getSize <- function(conn = NULL, db.credential = NULL){
+getSize <- function(conn = NULL, db.credential = NULL, db = 'BIAD'){
     sql.command='SELECT table_schema AS "Database", (SUM(data_length)+SUM(index_length)) / 1024 / 1024 / 1024 AS "Size (GB)" FROM information_schema.TABLES GROUP BY table_schema'
-    query.database(sql.command,conn)
+    size <- query.database(sql.command,conn)
+    size[which( size[,1] == db),]
 }
+
+
+
 get.keys <- function(conn = NULL, db.credentials = NULL){
 	sql.command <- "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE CONSTRAINT_SCHEMA='BIAD'"
 	keys <- query.database(conn = conn, db.credentials = db.credentials, sql.command = sql.command)
