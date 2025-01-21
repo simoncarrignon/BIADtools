@@ -1,6 +1,5 @@
 strategy,groupe description,group description
-groupE, major dometsic animals, bostaur // oviscap // ovisari // caprhir // susscrd,
+groupE, major dometsic animals, bostaur // oviscap // ovisari // caprhir // susscrd
 groupE, meat wild animal, cervela // caprcap // bosprim // susscrf// alcealc // equufer
 groupE, other , *
-groupF, major dometsic animals and 5 wild, bostaur // oviscap // ovisari // caprhir  // susscrd // cervela // caprcap // bosprim // susscrf // lepueur  bostaur // oviscap // ovisari // caprhir // susscrd,
-groupG, meat wild animal, bostaur // oviscap // ovisari // caprhir // susscrd + all mammal (zoption_TAXONLIS)
+groupF, major dometsic animals and 5 wild, bostaur // oviscap // ovisari // caprhir  // susscrd // cervela // caprcap // bosprim // susscrf // lepueur  bostaur // oviscap // ovisari // caprhir // susscrd
