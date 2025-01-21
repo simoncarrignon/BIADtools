@@ -14,55 +14,22 @@ require(rnaturalearth)
 require(rnaturalearthdata)
 
 
-conn  <-  init.conn()
+db.credentials <- list()
+db.credentials$BIAD_DB_USER <- "simon carrignon"
+db.credentials$BIAD_DB_PASS <- "simon carrignon"
+db.credentials$BIAD_DB_HOST <- "macelab-server.biochem.ucl.ac.uk"
+db.credentials$BIAD_DB_PORT <- 3306
+conn  <-  init.conn(db.credentials)
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
- query.database(conn = conn,sql.command = "SELECT * FROM Phases where PhasesId == BCX")
-
 allsite_sf <- st_as_sf(allsites, coords = c("Longitude", "Latitude"), crs =st_crs(world))
-world  <- 
 
-
-# Crop the world map to the extent of the bounding box
-world_cropped <- st_crop(world, st_buffer(allsite_sf,100))
-world_cropped <- st_make_grid(world, st_buffer(allsite_sf,100))
-
-# Create a grid over the cropped area
-grid_spacing <- 1  # Specify the spacing for the grid in degrees
-grid <- st_make_grid(world_cropped, cellsize = grid_spacing, square = FALSE) # square = FALSE for hexagons
-
-# Filter the grid to keep only the cells intersecting land
-land_grid <- st_intersection(grid, world_cropped)
-plot(st_geometry(world_cropped))
-plot(st_geometry(world),add=T)
-plot(st_geometry(allsite_sf),col="red")
-plot(st_geometry(grid),add=TRUE)
 area_of_interest  <- c( "France","Germany","Netherlands","Sweden", "Great Britain","Belgium","Luxembourg","Switzerland", "Ireland","Denmark","Czechia / Czech Republic","Poland", "Austria" ,"Andorra","Isle of Man", "Slovakia","Liechtenstein","Serbia","Croatia", "Hungary","Romania","Bosnia and Herzegovina","Bulgaria", "Latvia","North Macedonia","Ukraine","Slovenia", "Montenegro", "Guernsey","Russia","Estonia","Lithuania", "Albania","Kosovo","Moldova", "Norway","Finland", "Belarus")
-allsites_lim = allsites[ allsites$Country %in%  area_of_interest,]
-allsite_sf <- st_as_sf(allsites_lim, coords = c("Longitude", "Latitude"), crs =st_crs(world))
-plot(st_geometry(allsite_sf),pch=20,col="red")
-sel_countries  <-  st_intersects(world,allsite_sf)
-world  <-  world[lengths(sel_countries)>0,]
-wd <- st_geometry(world)
-plot(wd)
-wd <- st_simplify(wd,10000)
-plot(wd)
-plot( st_crop(x=wd, y=st_bbox(allsite_sf)))
-world_cropped <- st_make_valid(world_cropped)
-aoi <- st_crop(wd,st_bbox(c(xmin=-10,xmax=50,ymin=36,ymax=70)))
-aoi <- st_union(aoi)
-grid <- st_make_grid(aoi, cellsize = 1.5, square=FALSE)
-grid <- st_intersection(grid,aoi)
-plot(grid)
-inter  <-  st_intersects(st_make_valid(grid),allsite_sf)
-grid_lim=grid[lengths(inter)>0] 
-inter  <-  inter[lengths(inter)>0]
-plot(st_bind_cols(grid_lim,n_sites=log(lengths(inter)))[,"n_sites"],reset=F)
+
 allfaunal <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn))
 allbotanical <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn,elt="ABotSamples"))
 
-#extract all C14, bones, Graves,kk
 get_all_elemets <- function(site,conn,elt="FaunalSpecies"){
     tree=get.relatives(table.name="Sites",primary.value=site,directions="down",conn=conn)
     print(site)
@@ -100,6 +67,9 @@ for(i in 1:length(grouped)){
     alldata[i,tax]=unlist(curr[,2])
 }
 
+saveRDS(file"tableTaxaPerMetasites.RDS",alldata)
+
+grid=readRDS("grid_europe.RDS")
 
 pca=prcomp(log(alldata+1))
 norm=alldata/apply(alldata,1,sum)
@@ -108,7 +78,7 @@ pca.data=FactoMineR::PCA(norm)
 pca=FactoMineR::PCA(alldata)
 plot(st_bind_cols(grid_lim,len=pca$ind$coord[,1]))
 pca=FactoMineR::PCA(log(alldata+1))
-plot(st_bind_cols(grid_lim,len=pca$ind$coord[,1]))
+plot(st_bind_cols(grid_lim,len=pca$ind$coord[,3]))
 
 norm=alldata/apply(alldata,1,sum)
 pca=FactoMineR::PCA(norm)
@@ -162,7 +132,7 @@ plot(wd,add=T,border="red",lwd=2)
 
 
 nnisp=sapply(grouped,function(a)sum(a[,2]))
-plot(st_bind_cols(grid_lim,total_nisp=log10(nnisp)),reset=F)
+plot(st_bind_cols(grid_lim,total_nisp=log10(nnisp+1)),reset=F)
 plot(wd,add=T,border="red",lwd=2)
 
 
@@ -173,7 +143,7 @@ plot(st_bind_cols(grid_lim,len=log10(numtax)),reset=F)
 plot(wd,add=T,border="red",lwd=2)
 
 
-pcdata  <-  alldata[-c(which(nnisp<10)),]
+pcdata  <-  log(alldata[-c(which(nnisp<10)),]
 pcsites <- allsites[-c(which(nnisp<10)),]
 pcgrid <- grid_lim[-c(which(nnisp<10)),]
 
