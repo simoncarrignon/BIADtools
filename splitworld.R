@@ -4,9 +4,8 @@ source("../BIADwiki/R/functions.database.connect.R")
 require(rnaturalearth)
 require(rnaturalearthdata)
 
-conn  <-  init.conn()
-#allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
-#saveRDS(file="allsites_210212025.RDS",allsites)
+allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
+saveRDS(file="allsites_210212025.RDS",allsites)
 allsites=readRDS(file="allsites_210212025.RDS")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 

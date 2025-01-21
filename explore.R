@@ -1,12 +1,4 @@
 library(sf)
-get_elements <- function(x, element) {
-	newlist=list()
-	for(elt in names(x)){
-		if(elt == element) newlist=append(newlist,x[[elt]])
-		else if(is.list(x[[elt]])) newlist=append(newlist,get_elements(x[[elt]],element) )
-	}
-	return(newlist)
-}
 
 source("../BIADwiki/R/functions.R")
 source("../BIADwiki/R/functions.database.connect.R")
@@ -19,6 +11,7 @@ db.credentials$BIAD_DB_USER <- "simon carrignon"
 db.credentials$BIAD_DB_PASS <- "simon carrignon"
 db.credentials$BIAD_DB_HOST <- "macelab-server.biochem.ucl.ac.uk"
 db.credentials$BIAD_DB_PORT <- 3306
+
 conn  <-  init.conn(db.credentials)
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
 world <- ne_countries(scale = "medium", returnclass = "sf")
@@ -27,48 +20,11 @@ allsite_sf <- st_as_sf(allsites, coords = c("Longitude", "Latitude"), crs =st_cr
 
 area_of_interest  <- c( "France","Germany","Netherlands","Sweden", "Great Britain","Belgium","Luxembourg","Switzerland", "Ireland","Denmark","Czechia / Czech Republic","Poland", "Austria" ,"Andorra","Isle of Man", "Slovakia","Liechtenstein","Serbia","Croatia", "Hungary","Romania","Bosnia and Herzegovina","Bulgaria", "Latvia","North Macedonia","Ukraine","Slovenia", "Montenegro", "Guernsey","Russia","Estonia","Lithuania", "Albania","Kosovo","Moldova", "Norway","Finland", "Belarus")
 
-allfaunal <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn))
-allbotanical <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn,elt="ABotSamples"))
+#allfaunal <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn))
+#allbotanical <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn,elt="ABotSamples"))
 
-get_all_elemets <- function(site,conn,elt="FaunalSpecies"){
-    tree=get.relatives(table.name="Sites",primary.value=site,directions="down",conn=conn)
-    print(site)
-    print(elt)
-    extracted=get_elements(tree,elt)
-    return(unname(extracted))
-}
 
-allfaunal=list()
-allbotanical=list()
-for(i in 1:length(inter)){
-    print(paste0("I",i))
-    if(is.null(allfaunal[[paste0("I",i)]])){
-        allres=list()
-        for(site in allsite_sf$SiteID[inter[[i]]]){
-            allres <- append(allres,get_all_elemets(site,conn=conn))
-        }
-        allfaunal[[paste0("I",i)]]=allres
-    }
-    #if(is.null(allbotanical[[paste0("I",i)]])) allbotanical[[paste0("I",i)]]=lapply(allsite_sf$SiteID[inter[[i]]],get_all_elemets,conn=conn,elt="ABotSamples")
-    else print("alread done")
-}
-alltaxon=lapply(allfaunal,function(i)do.call("rbind",i))
-grouped=lapply(alltaxon,function(data)if(all(c("TaxonCode", "NISP") %in% names(data)))aggregate(NISP ~ TaxonCode, data=data,sum,na.rm=TRUE))
-
-alltaxonname <- sort(unique(unlist(sapply(grouped,function(i)if("TaxonCode" %in%  colnames(i))i[,"TaxonCode"]))))
-alldata=matrix(ncol=length(alltaxonname),nrow=length(grouped))
-alldata[,]=0
-colnames(alldata)=alltaxonname
-
-for(i in 1:length(grouped)){
-    curr=grouped[[i]]
-    tax=as.character(unlist(curr[,1]))
-    print(unlist(curr[,2]))
-    alldata[i,tax]=unlist(curr[,2])
-}
-
-saveRDS(file"tableTaxaPerMetasites.RDS",alldata)
-
+alldata <- readRDS("tableTaxaPerMetasites.RDS")
 grid=readRDS("grid_europe.RDS")
 
 pca=prcomp(log(alldata+1))
