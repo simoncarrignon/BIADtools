@@ -18,6 +18,8 @@ conn  <-  init.conn()
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
+ query.database(conn = conn,sql.command = "SELECT * FROM Phases where PhasesId == BCX")
+
 allsite_sf <- st_as_sf(allsites, coords = c("Longitude", "Latitude"), crs =st_crs(world))
 world  <- 
 
@@ -56,7 +58,7 @@ plot(grid)
 inter  <-  st_intersects(st_make_valid(grid),allsite_sf)
 grid_lim=grid[lengths(inter)>0] 
 inter  <-  inter[lengths(inter)>0]
-plot(st_bind_cols(grid_lim,len=log(lengths(inter)))[,"len"],reset=F)
+plot(st_bind_cols(grid_lim,n_sites=log(lengths(inter)))[,"n_sites"],reset=F)
 allfaunal <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn))
 allbotanical <- sapply(inter,function(sites) sapply(allsite_sf$SiteID[sites],get_all_elemets,conn=conn,elt="ABotSamples"))
 
@@ -101,6 +103,7 @@ for(i in 1:length(grouped)){
 
 pca=prcomp(log(alldata+1))
 norm=alldata/apply(alldata,1,sum)
+plot(st_bind_cols(grid_lim,len=pca$x[,1]))
 pca.data=FactoMineR::PCA(norm)
 pca=FactoMineR::PCA(alldata)
 plot(st_bind_cols(grid_lim,len=pca$ind$coord[,1]))
@@ -153,33 +156,42 @@ plot(st_bind_cols(grid_lim[-c(78,82)],len=pca.data$ind$coord[-c(78,82),1]))
 #notes: set up meeting with ejelena to show maps of nmber of faunal remain pero 'hexagons':
 # - map 1: allsites with remains
 # - hexagones with counts
-plot(grid_lim,reset=F)
-points(st_coordinates(allsite_sf),pch=20,col="green")
-plot(st_bind_cols(grid_lim,len=lengths(inter)),reset=F)
-plot(grid_lim,reset=F)
+plot(st_geometry(grid_lim))
 points(st_coordinates(allsite_sf),pch=21,bg="green",lwd=.1)
 plot(wd,add=T,border="red",lwd=2)
-sapply(grouped,nrow)
-plot(st_bind_cols(grid_lim,len=lengths(inter)),reset=F)
-
-nrows=sapply(grouped,nrow)
-numtax <- unlist(ifelse(lengths(grouped)==0,0,nrows))
-
-plot(st_bind_cols(grid_lim,len=log(numtax)),reset=F)
-text(st_coordinates(st_centroid(st_make_valid(grid_lim))),labels=numtax)
-plot(wd,add=T,border="red",lwd=2)
 
 
-nnisp=sapply(grouped,function(a)log10(sum(a[,2])))
-plot(st_bind_cols(grid_lim,len=nnisp),reset=F)
-text(st_coordinates(st_centroid(st_make_valid(grid_lim))),labels=round(nnisp))
+nnisp=sapply(grouped,function(a)sum(a[,2]))
+plot(st_bind_cols(grid_lim,total_nisp=log10(nnisp)),reset=F)
 plot(wd,add=T,border="red",lwd=2)
 
 
 nrows=sapply(grouped,nrow)
 numtax <- unlist(ifelse(lengths(grouped)==0,0,nrows))
 plot(st_bind_cols(grid_lim,len=log10(numtax)),reset=F)
-text(st_coordinates(st_centroid(st_make_valid(grid_lim))),labels=round(log10(numtax),digit=2))
+#text(st_coordinates(st_centroid(st_make_valid(grid_lim))),labels=round(log10(numtax),digit=2))
 plot(wd,add=T,border="red",lwd=2)
 
 
+pcdata  <-  alldata[-c(which(nnisp<10)),]
+pcsites <- allsites[-c(which(nnisp<10)),]
+pcgrid <- grid_lim[-c(which(nnisp<10)),]
+
+ca=FactoMineR::CA(pcdata)
+plot(st_bind_cols(pcgrid,ca=ca$row$coord[,1]),reset=F)
+
+pca=FactoMineR::PCA(pcdata)
+plot(st_bind_cols(pcgrid,pca=pca$ind$coord[,1]),reset=F)
+plot(wd,add=T,border="red",lwd=2)
+
+
+
+
+
+## Create a map and CSV with all sites faunal isotopes and NISP
+
+## Meeting 16/12/2024 with Jelen
+## GMS // GMM , what are they? they seem wrong
+Meeting with Adrian:
+-how date are generate/added
+Getting list of things to exxlude
