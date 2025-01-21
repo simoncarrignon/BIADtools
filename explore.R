@@ -87,7 +87,7 @@ alltaxon=lapply(allfaunal,function(i)do.call("rbind",i))
 grouped=lapply(alltaxon,function(data)if(all(c("TaxonCode", "NISP") %in% names(data)))aggregate(NISP ~ TaxonCode, data=data,sum,na.rm=TRUE))
 
 alltaxonname <- sort(unique(unlist(sapply(grouped,function(i)if("TaxonCode" %in%  colnames(i))i[,"TaxonCode"]))))
-alldata=matrix(ncol=length(alltaxonname),nrow=length(summarized))
+alldata=matrix(ncol=length(alltaxonname),nrow=length(grouped))
 alldata[,]=0
 colnames(alldata)=alltaxonname
 
