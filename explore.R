@@ -112,7 +112,21 @@ plot(wd,add=T,border="red",lwd=2)
 
 
 
+allgroups=read.csv("groupings.csv")
+#strategy,groupe description,group description
+#groupE, major dometsic animals, bostaur // oviscap // ovisari // caprhir // susscrd
+#groupE, meat wild animal, cervela // caprcap // bosprim // susscrf// alcealc // equufer
+#groupE, other , *
+#groupF, major dometsic animals and 5 wild, bostaur // oviscap // ovisari // caprhir  // susscrd // cervela // caprcap // bosprim // susscrf // lepueur  bostaur // oviscap // ovisari // caprhir // susscrd
 
+majordomestic <- apply(alldata[,colnames(alldata) %in% sapply(strsplit(allgroups[1,3],"//"),trimws)],1,sum)
+meatwild <-      apply(alldata[,colnames(alldata) %in% sapply(strsplit(allgroups[2,3],"//"),trimws)],1,sum)
+rest <- apply(alldata[,!(colnames(alldata) %in% sapply(strsplit(allgroups[1,3],"//"),trimws)) | (colnames(alldata) %in% sapply(strsplit(allgroups[2,3],"//"),trimws))],1,sum)
+plot(st_bind_cols(grid_lim,major_domestic=log(majordomestic),wild=log(meatwild)),reset=F)
+plot(st_bind_cols(grid_lim,ratio=log(majordomestic)/log(meatwild)),reset=F)
+plot(st_bind_cols(grid_lim,domestic=majordomestic/(meatwild+majordomestic),wild=meatwild/(meatwild+majordomestic)),reset=F)
+plot(st_bind_cols(grid_lim,domestic=majordomestic/(meatwild+majordomestic+rest),wild=meatwild/(meatwild+majordomestic+rest),rest=rest/(meatwild+majordomestic+rest)),reset=F)
+plot(st_bind_cols(grid_lim,wild=meatwild/(meatwild+majordomestic)),reset=F)
 
 ## Create a map and CSV with all sites faunal isotopes and NISP
 
