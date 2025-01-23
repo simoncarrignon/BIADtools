@@ -135,3 +135,19 @@ plot(st_bind_cols(grid_lim,wild=meatwild/(meatwild+majordomestic)),reset=F)
 Meeting with Adrian:
 -how date are generate/added
 Getting list of things to exxlude
+
+
+
+########## GENERATE PCA ALL
+
+db.credentials <- list()
+db.credentials$BIAD_DB_USER <- "simon carrignon"
+db.credentials$BIAD_DB_PASS <- "simon carrignon"
+db.credentials$BIAD_DB_HOST <- "macelab-server.biochem.ucl.ac.uk"
+db.credentials$BIAD_DB_PORT <- 3306
+
+conn  <-  init.conn(db.credentials)
+allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
+allFaunal <- sapply(allsites$SiteID,get_all_elemets,conn=conn)
+world <- ne_countries(scale = "medium", returnclass = "sf")
+allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
