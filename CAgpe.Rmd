@@ -1,0 +1,58 @@
+
+---
+title: "PCA Analysis: Group F"
+author: ""
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+
+In this document, we perform a Correspondence Analysis (CA) and Principal Component Analysis (PCA) on a specific group of animal species data labeled as **Group F**. The group consists of:
+- bostaur
+- oviscap+ovisari+caprhir (combined into 'ovi')
+- susscrd
+- cervela
+- caprcap
+- bosprim
+- susscrd
+- lepueur
+
+```{r load-data}
+library(FactoMineR)
+library(sf)
+
+alldata <- readRDS("tableTaxaPerMetasites.RDS")
+grid <- readRDS("grid_europe_lim.RDS")
+
+ovi <- apply(alldata[,c("oviscap","ovisari","caprhir")],1,sum)
+alldata <- cbind(alldata, ovi)
+
+groupf <- alldata[,c("bostaur","susscrd","cervela","caprcap","bosprim","susscrd","lepueur","ovi")]
+
+Namef <- paste0(c("oviscap-ovisari-caprhir", "bostaur", "susscrd", "cervela", "caprcap", "bosprim", "susscrd", "lepueur", "ovi"), collapse="//")
+empty <- which(apply(groupf, 1, sum) == 0)
+```
+
+## Correspondence Analysis
+
+### Initial CA Plot
+
+```{r ca-initial}
+caGroupeF <- CA(groupf[-empty, ])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
+plot(wd, add = TRUE, border = "red", lwd = 2)
+```
+
+### CA Minus Outliers
+
+```{r ca-minus-outliers}
+empty <- c(empty, which(apply(groupf, 1, function(i) any(i > apply(groupf[-empty, ], 2, quantile, probs = 0.95)))))
+caGroupeF <- CA(groupf[-empty,])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = "CA1 minus outliers")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+```
+
