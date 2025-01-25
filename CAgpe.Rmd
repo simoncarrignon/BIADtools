@@ -1,4 +1,3 @@
-
 ---
 title: "PCA Analysis: Group F"
 author: ""
@@ -18,7 +17,7 @@ In this document, we perform a Correspondence Analysis (CA) and Principal Compon
 - cervela
 - caprcap
 - bosprim
-- susscrd
+- susscrf
 - lepueur
 
 ```{r load-data}
@@ -31,9 +30,9 @@ grid <- readRDS("grid_europe_lim.RDS")
 ovi <- apply(alldata[,c("oviscap","ovisari","caprhir")],1,sum)
 alldata <- cbind(alldata, ovi)
 
-groupf <- alldata[,c("bostaur","susscrd","cervela","caprcap","bosprim","susscrd","lepueur","ovi")]
+groupf <- alldata[,c("bostaur","susscrd","cervela","caprcap","bosprim","susscrf","lepueur","ovi")]
 
-Namef <- paste0(c("oviscap-ovisari-caprhir", "bostaur", "susscrd", "cervela", "caprcap", "bosprim", "susscrd", "lepueur", "ovi"), collapse="//")
+Namef <- paste0(c("oviscap-ovisari-caprhir", "bostaur", "susscrd", "cervela", "caprcap", "bosprim", "susscrd", "susscrf", "ovi"), collapse="//")
 empty <- which(apply(groupf, 1, sum) == 0)
 ```
 
