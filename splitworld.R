@@ -5,8 +5,8 @@ require(rnaturalearth)
 require(rnaturalearthdata)
 
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
-saveRDS(file="allsites_210212025.RDS",allsites)
-allsites=readRDS(file="allsites_210212025.RDS")
+saveRDS(file="allsites_210242025.RDS",allsites)
+allsites=readRDS(file="allsites_210242025.RDS")
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
 allsite_sf <- st_as_sf(allsites, coords = c("Longitude", "Latitude"), crs =st_crs(world))
