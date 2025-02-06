@@ -1,0 +1,28 @@
+---
+title: "Most found taxons"
+author: ""
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+Finding most found species by hexagons
+
+```{r}
+alldata <- readRDS("tableTaxaPerMetasites.RDS")
+alltopten  <- apply(alldata,1,function(line)sort(line,decreasing=T)[1:10],simplify=F)
+topten <- unlist(lapply(alltopten[sapply(alltopten,sum)>0],names))
+counts <- table(topten)
+barplot(sort(counts),las=3)
+```
+looks only at th one that are in top ten of at least 2 hexagons:
+
+```{r}
+barplot(sort(counts[counts>1]),las=3)
+```
+
+
+
