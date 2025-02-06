@@ -4,21 +4,27 @@ author: ""
 date: "`r Sys.Date()`"
 ---
 
-```{r}
+```{r,eval=F}
 source("../BIADwiki/R/functions.R")
 source("../BIADwiki/R/functions.database.connect.R")
 conn  <-  init.conn()
 
 allgrave  <-  query.database(conn = conn,sql.command = "SELECT * FROM GraveIndividuals")
+saveRDS(file="allgraves.RDS",allgrave)
+
 allsites=lapply(allgrave$IndividualID,function(ind){
          print(ind)
          wholetree <- get.relatives(conn = conn,table.name="GraveIndividuals",primary.value=ind,directions="up",zoption=F)
          list(site=get_elements(wholetree,"Sites"),
               phase=get_elements(wholetree,"Phases"))
 })
-#simply <- sapply(allsites,function(i)i["site"])
 saveRDS(file="GravesSitesPhase.RDS",allsites)
+```
 
+```{r}
+
+allsites <- readRDS("GravesSitesPhase.RDS")
+allgrave <- readRDS("allgraves.RDS")
 phases  <-  as.data.frame(t(sapply(allsites,function(i)i$phase$data)))
 sites  <-  as.data.frame(t(sapply(allsites,function(i)i$site$data)))
 noage  <-  allgrave[is.na(allgrave$AgeCategorical) & (is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax)),]
@@ -26,16 +32,35 @@ nocat  <-  allgrave[is.na(allgrave$AgeCategorical) ,]
 noval  <-  allgrave[is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax),]
 val  <-  allgrave[!is.na(allgrave$AgeMin) | !is.na(allgrave$AgeMax),]
 cat  <-  allgrave[!is.na(allgrave$AgeCategorical),]
-format(Sys.time(), "%A, the %d of %B, %Y")
 ```
 
 On `format(Sys.time(), "%A, the %d of %B, %Y")`, BIAD contain a sample of `nrow(allgrave)` individuals. Only `nrow(noage)` individual have no information on their ages ; while `nrow(allgrave) - nrow(noage)` have _some_ information ( `nrow(cat)` in the form of a categorical age, nrow(val) as numerical value).
 
 ```{r}
-hist(val$AgeMin,xlim=c(0,99))
-hist(val$AgeMax,xlim=c(0,99))
-barplot(table(cat$AgeCategorical))
-
+hist(val$AgeMax,xlim=c(0,99),col="red",breaks=20,main="Age distribution")
+hist(val$AgeMin,xlim=c(0,99),add=T,col=adjustcolor("blue",.6),breaks=20)
+legend("toprigh",legend=c("age min","age max"),fill=c(adjustcolor("blue",.6),"red"))
+hist((val$AgeMax+val$AgeMin)/2,xlim=c(0,99),col="dark green",breaks=20,main="Median Age distribution",xlab="(age min)+(age max)/2")
 ```
 
+As one could expect, there is a high child mortality. 
+
+This is also confirmed if we divided our categories in 3 broad categories.
+
+
+```{r}
+cat$AgeCategorical= as.factor(tolower(cat$AgeCategorical))
+levels(cat$AgeCategorical)=c( "neonate" ,"neonate/infant" ,"infant" ,"infant/neonate/subadult" ,"infant/subadult" ,"subadult" ,"subadult/adult: young" ,"adult: young" ,"infant/subadult/adult: young" , "adult: young/mature" , "subadult/adult: young/mature" , "adult: mature" , "adult: young/mature/elderly" , "subadult/adult: young/mature/elderly" , "adult: mature/elderly" , "adult: elderly")
+
+
+#catsup <- list(subadult = c( "neonate" ,"neonate/infant" ,"infant" ,"infant/neonate/subadult" , "infant/subadult" ,"subadult" ), adult = c("adult: young" ,"adult: young/mature" ,"adult: mature" , "adult: elderly" ,"adult: mature/elderly" ,"adult: young/mature/elderly" ))
+#catsup <- sapply(catsup,function(match)tolower(cat$AgeCategorical) %in% match)
+#apply(colnames(catsup),function(i)catusp[,i]
+#cat$catgen  = NA
+#cat$catgen[cat$AgeCategorical %in% c("neonate","neonate/infant","infant","subadult")]  = "child"
+#cat$catgen[cat$AgeCategorical %in% c(","subadult/young","adult:young")]  = "young"
+cat$catgen[cat$AgeCategorical %in% c("adult: young/mature","neonate/infant","infant")]  = "adult"
+```
+
+Combining information given by the categories defined by the archaeologist and estimated age
 
