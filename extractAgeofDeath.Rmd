@@ -1,0 +1,41 @@
+---
+title: "PCA Analysis: Group F"
+author: ""
+date: "`r Sys.Date()`"
+---
+
+```{r}
+source("../BIADwiki/R/functions.R")
+source("../BIADwiki/R/functions.database.connect.R")
+conn  <-  init.conn()
+
+allgrave  <-  query.database(conn = conn,sql.command = "SELECT * FROM GraveIndividuals")
+allsites=lapply(allgrave$IndividualID,function(ind){
+         print(ind)
+         wholetree <- get.relatives(conn = conn,table.name="GraveIndividuals",primary.value=ind,directions="up",zoption=F)
+         list(site=get_elements(wholetree,"Sites"),
+              phase=get_elements(wholetree,"Phases"))
+})
+#simply <- sapply(allsites,function(i)i["site"])
+saveRDS(file="GravesSitesPhase.RDS",allsites)
+
+phases  <-  as.data.frame(t(sapply(allsites,function(i)i$phase$data)))
+sites  <-  as.data.frame(t(sapply(allsites,function(i)i$site$data)))
+noage  <-  allgrave[is.na(allgrave$AgeCategorical) & (is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax)),]
+nocat  <-  allgrave[is.na(allgrave$AgeCategorical) ,]
+noval  <-  allgrave[is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax),]
+val  <-  allgrave[!is.na(allgrave$AgeMin) | !is.na(allgrave$AgeMax),]
+cat  <-  allgrave[!is.na(allgrave$AgeCategorical),]
+format(Sys.time(), "%A, the %d of %B, %Y")
+```
+
+On `format(Sys.time(), "%A, the %d of %B, %Y")`, BIAD contain a sample of `nrow(allgrave)` individuals. Only `nrow(noage)` individual have no information on their ages ; while `nrow(allgrave) - nrow(noage)` have _some_ information ( `nrow(cat)` in the form of a categorical age, nrow(val) as numerical value).
+
+```{r}
+hist(val$AgeMin,xlim=c(0,99))
+hist(val$AgeMax,xlim=c(0,99))
+barplot(table(cat$AgeCategorical))
+
+```
+
+
