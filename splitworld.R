@@ -39,6 +39,8 @@ inter  <-  inter[lengths(inter)>0]
 
 ##simple plot to show the number of sites per grid
 plot(st_bind_cols(grid_lim,len=log(lengths(inter)))[,"len"],reset=F)
-st_write(grid,dsn="grid_europe.gpkg")
+st_write(grid_lim,dsn="grid_europe.gpkg")
+st_write(grid_lim,dsn="grid_europe_lim.gpkg")
 saveRDS(file="grid_europe.RDS",grid)
+saveRDS(file="grid_europe_lim.RDS",grid_lim)
 
