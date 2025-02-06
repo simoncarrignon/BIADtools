@@ -24,5 +24,15 @@ looks only at th one that are in top ten of at least 2 hexagons:
 barplot(sort(counts[counts>1]),las=3)
 ```
 
+Keeping only land mammal, and removing indeterminated mammels.
+
+```{r}
+indet <- read.csv("indet.csv")
+land <- read.csv("landmamal_cat.csv")
+land$Taxon.code[!(land$Taxon.code %in% colnames(alldata))]
+alldata[,sort(land$Taxon.code)]
+
+```
+
 
 
