@@ -41,6 +41,8 @@ inter  <-  inter[lengths(inter)>0]
 plot(st_bind_cols(grid_lim,len=log(lengths(inter)))[,"len"],reset=F)
 st_write(grid_lim,dsn="grid_europe.gpkg")
 st_write(grid_lim,dsn="grid_europe_lim.gpkg")
+plot(st_bind_cols(grid_lim,len=log(lengths(inter)))[,"len"],main="(log) #Site per Hxagons")
+st_write(grid,dsn="grid_europe.gpkg")
 saveRDS(file="grid_europe.RDS",grid)
 saveRDS(file="grid_europe_lim.RDS",grid_lim)
 
