@@ -1,10 +1,10 @@
 ---
-title: "PCA Analysis: Group F"
+title: "Age of Death BIAD"
 author: ""
 date: "`r Sys.Date()`"
 ---
 
-```{r,eval=F}
+```{r,eval=F,echo=F}
 source("../BIADwiki/R/functions.R")
 source("../BIADwiki/R/functions.database.connect.R")
 conn  <-  init.conn()
@@ -21,8 +21,7 @@ allsites=lapply(allgrave$IndividualID,function(ind){
 saveRDS(file="GravesSitesPhase.RDS",allsites)
 ```
 
-```{r}
-
+```{r,echo=F}
 allsites <- readRDS("GravesSitesPhase.RDS")
 allgrave <- readRDS("allgraves.RDS")
 phases  <-  as.data.frame(t(sapply(allsites,function(i)i$phase$data)))
@@ -34,7 +33,7 @@ val  <-  allgrave[!is.na(allgrave$AgeMin) | !is.na(allgrave$AgeMax),]
 cat  <-  allgrave[!is.na(allgrave$AgeCategorical),]
 ```
 
-On `format(Sys.time(), "%A, the %d of %B, %Y")`, BIAD contain a sample of `nrow(allgrave)` individuals. Only `nrow(noage)` individual have no information on their ages ; while `nrow(allgrave) - nrow(noage)` have _some_ information ( `nrow(cat)` in the form of a categorical age, nrow(val) as numerical value).
+On `r format(Sys.time(), "%A, the %d of %B, %Y")`, BIAD contain a sample of `r nrow(allgrave)` individuals. Only `r nrow(noage)` individual have no information on their ages ; while `r nrow(allgrave) - nrow(noage)` have _some_ information (`r nrow(cat)` in the form of a categorical age, `r nrow(val)` as numerical value, some with both).
 
 ```{r}
 hist(val$AgeMax,xlim=c(0,99),col="red",breaks=20,main="Age distribution")
@@ -44,23 +43,123 @@ hist((val$AgeMax+val$AgeMin)/2,xlim=c(0,99),col="dark green",breaks=20,main="Med
 ```
 
 As one could expect, there is a high child mortality. 
+This is confirmed by using categorical classification show in the barplot below.
 
-This is also confirmed if we divided our categories in 3 broad categories.
+<!--
+note: not sure about showing any graph about the categories as they are broad and messy and complex to deal with. I would just mention them in, as in the paragraph after the next plot.
+-->
 
 
-```{r}
+```{r,echo=F}
 cat$AgeCategorical= as.factor(tolower(cat$AgeCategorical))
 levels(cat$AgeCategorical)=c( "neonate" ,"neonate/infant" ,"infant" ,"infant/neonate/subadult" ,"infant/subadult" ,"subadult" ,"subadult/adult: young" ,"adult: young" ,"infant/subadult/adult: young" , "adult: young/mature" , "subadult/adult: young/mature" , "adult: mature" , "adult: young/mature/elderly" , "subadult/adult: young/mature/elderly" , "adult: mature/elderly" , "adult: elderly")
 
 
-#catsup <- list(subadult = c( "neonate" ,"neonate/infant" ,"infant" ,"infant/neonate/subadult" , "infant/subadult" ,"subadult" ), adult = c("adult: young" ,"adult: young/mature" ,"adult: mature" , "adult: elderly" ,"adult: mature/elderly" ,"adult: young/mature/elderly" ))
-#catsup <- sapply(catsup,function(match)tolower(cat$AgeCategorical) %in% match)
-#apply(colnames(catsup),function(i)catusp[,i]
-#cat$catgen  = NA
-#cat$catgen[cat$AgeCategorical %in% c("neonate","neonate/infant","infant","subadult")]  = "child"
-#cat$catgen[cat$AgeCategorical %in% c(","subadult/young","adult:young")]  = "young"
-cat$catgen[cat$AgeCategorical %in% c("adult: young/mature","neonate/infant","infant")]  = "adult"
+par(mar=c(5,15,5,1))
+barplot(table(cat$AgeCategorical),las=1,horiz=T,col=adjustcolor("darkgreen",.3),lwd=.4,main="Count of indviduals of each categories",xlab="number of individual")
 ```
 
-Combining information given by the categories defined by the archaeologist and estimated age
+If we use broader categories, and split our dataset by general periods:
+
+```{r,fig.cap="legend: Change in proportion of young vs adult deaths (raw data)"}
+#cat$catgen  = NA
+#cat$catgen[cat$AgeCategorical %in% c("neonate","neonate/infant","infant","subadult")]  = "child"
+##cat$catgen[cat$AgeCategorical %in% c(","subadult/young","adult:young")]  = "young"
+#cat$catgen[cat$AgeCategorical %in% c("adult: young" ,"adult: young/mature" ,"adult: mature" , "adult: elderly" ,"adult: mature/elderly" ,"adult: young/mature/elderly" )]  = "adult"
+allgrave$catgen  = "others"
+allgrave$catgen[cat$AgeCategorical %in% c("neonate","neonate/infant","infant","subadult")]  = "child"
+allgrave$catgen[cat$AgeCategorical %in% c("adult: young" ,"adult: young/mature" ,"adult: mature" , "adult: elderly" ,"adult: mature/elderly" ,"adult: young/mature/elderly" )]  = "adult"
+#table(allgrave$catgen)
+periods=c("EN","MN","LN","EBA","MBA","LBA")
+byperiods=sapply(periods,function(p){
+    table(allgrave$catgen[phases$Period==p])/sum(phases$Period==p)
+})
+barplot(byperiods,legend=T,args.legend=list(bg="white"),ylab="proportion deaths",col=hcl.colors(3,alpha=.4))
+
+```
+
+Combining the information provided by the categories defined by the archaeologists with the ages estimated using other methods could help us refine the precision of the overal description of the age distribution for given population in time and space. But that will still leave us we distributions based very small sample size, broad and noisy categories and ultimatly providing very limited representation of the actual distribution of deaths in the past population. The Figure below, which show basic change in time of the ratio betwe young death and adult death, suffer from such limitation.
+
+However, we believe that more precise estimation of the curve describing the age of death at the population level could reveal a good amount of very valuable information. Accurately resolving such curve with the few evidence available in our data base could give us insights into overall population size, the likely presence of wars or epidemics as well as other more subtles cues about the socio-economic status of a given group. How economically active was the population? how much economic surplus could have been invested in care to the new born and ederly? and so on.
+
+
+To compute a more accurate estimate of the age of death distribution, we propose to model it using the large datasets describing age of death distributions in more recent populations, limiting these to populations that haven't undergone the industrial revolution. Using machine learning, we can explore and test a variety of models to find the one, or set of ones, that most accurately reproduce these distributions given key parameters of interest. Thans to the almost exhaustive nature of these recent datasets, we can bypass the biases inherent to the nature of archaeological evidence and collect large enough samples to produce statistically significant estimates. The diverse contexts encompassed by modern datasets ensure any model can account for a variety of scenarios encountered by any human population. Then, using the best fit of such models, or family of models, we hope to be able draw the more accurate estimates we need even with the limited empirical evidence available in our dataset. These estimates will allow us to explore key changes in the demographic and socio-economic structure of the populations living in our area of interesting from the early neolithic to the late bronze age. 
+
+
+## Geographical distribution
+
+
+We can look at the geographical distribution of european individuals for which we have _some_ indication of their age, whereas as categories or range of age.
+
+```{r,fig.width=10,fig.height=10,echo=F}
+require(sf)
+require(rnaturalearth)
+require(rnaturalearthdata)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+allsite_sf <- st_as_sf(sites[!(is.na(allgrave$AgeCategorical) & (is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax))),], coords = c("Longitude", "Latitude"), crs =st_crs(world))
+wd <- st_geometry(world[world$continent == "Europe" | world$name_en %in% c("Turkey","Armenia","Georgia","Azerbaijan","Kazakhstan"),])
+wd <- st_simplify(wd,10000)
+aoi <- st_crop(wd,st_bbox(c(xmin=-10,xmax=35,ymin=28,ymax=70)))
+aoi <- st_union(aoi)
+aoi_mod <- st_transform(aoi, crs = 25832)
+plot(st_geometry(aoi_mod),col=adjustcolor("red",.1),lwd=.6)
+aoi_sites <- allsite_sf[st_intersects(aoi,allsite_sf)[[1]],]
+plot(st_geometry(st_transform(aoi_sites,crs=st_crs(aoi_mod))),add=T,pch=20,cex=.7)
+```
+
+We can also look at how the ratio between the propotion of child vs adults death change in space and time, grouping sites in regions, regions being defined as follow:
+
+```{r,fig.width=8,fig.height=8,echo=F,warning=F}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+allsite_sf <- st_as_sf(sites, coords = c("Longitude", "Latitude"), crs =st_crs(world))
+wd <- st_geometry(world[world$continent == "Europe" | world$name_en %in% c("Turkey","Armenia","Georgia","Azerbaijan","Kazakhstan"),])
+wd <- st_simplify(wd,10000)
+aoi <- st_crop(wd,st_bbox(c(xmin=-10,xmax=35,ymin=28,ymax=70)))
+aoi <- st_union(aoi)
+grid <- st_make_grid(aoi, cellsize = 4, square=FALSE)
+inter  <-  st_intersects(st_make_valid(grid),allsite_sf)
+grid <- grid[lengths(inter)>50] 
+inter <- inter[lengths(inter)>50] 
+grid <- st_intersection(grid,aoi)
+aoi_mod <- st_transform(aoi, crs = 25832)
+grid_mod <- st_transform(grid, crs = 25832)
+aoi_sites <- allsite_sf[st_intersects(aoi,allsite_sf)[[1]],]
+plot(st_geometry(aoi_mod),col=adjustcolor("red",.1),lwd=.6)
+plot(grid_mod,add=T,col=adjustcolor("orange",.3) )
+plot(st_geometry(st_transform(aoi_sites,crs=st_crs(aoi_mod))),pch=20,cex=.7,add=T)
+```
+
+```{r,fig.width=20,fig.height=15,echo=F,warning=F}
+ratiobyhexa <- lapply(inter,function(i){
+    sub=allgrave[i,]
+    byperiods=sapply(periods,function(p){
+                         table(factor(sub$catgen[phases$Period[i]==p],level=unique(allgrave$catgen)))
+    })
+})
+concat <- lapply(ratiobyhexa,function(hex) cbind("neolithic"=apply(hex[,1:3],1,sum),"bronze age"=apply(hex[,4:6],1,sum)))
+ratios=lapply(concat,function(i){
+           apply(i,2,function(j){tmp=j/sum(j);return(log(tmp[1]/tmp[3]))})
+})
+ns=sapply(concat,function(i)apply(i,2,sum))
+ratios=do.call("rbind",ratios)
+par(mfrow=c(1,2))
+plot(aoi,main="Neolithic")
+plot(st_bind_cols(grid,ratios)[,1],add=T,pal=hcl.colors(20,"cividis"),breaks=seq(-1.3,2.6,.2))
+text(st_coordinates(st_centroid(grid)),labels=paste0("N=",ns[1,]),cex=.8)
+
+plot(aoi,main="Bronze Age")
+plot(st_bind_cols(grid,ratios)[,2],add=T,pal=hcl.colors(20,"cividis"),breaks=seq(-1.3,2.7,.2))
+text(st_coordinates(st_centroid(grid)),labels=paste0("N=",ns[2,]),cex=.8)
+```
+
+These maps show the ratio $r=\frac{p_{child}}{p_{adults}}$ , where $p_{x}$ is the proportion of death of category x in the population. The darker blue, the lowest is the ratio (so higher proportion of adult death) the lighter yellow, the higher the proportion of child death.
+
+When the barplot shown earlier show an overall tendancy for much larger child death, we can see that this picture isn't uniform when looking at different geographical area. No conclusion should be drawn from these maps  as they don't account at all for sample size, which are very different as shown by the N plotted in the middle of the hexagon. Bayesian model such as Gaussian Processes or ICAR could be used to interpolate the area with missing evidences while taking into account the varying sample sizes.
+
+
+
+```{r,eval=F,echo=F}
+plot(phases$GMM,(allgrave$AgeMax+allgrave$AgeMin)/2,)
+```
 
