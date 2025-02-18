@@ -1,0 +1,145 @@
+---
+title: "Group and Clean mamals"
+author: ""
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+
+```{r}
+library(FactoMineR)
+library(sf)
+alldata <- readRDS("tableTaxaPerMetasites.RDS")
+indet <- read.csv("indet.csv")
+topten <- unlist(lapply(alltopten[sapply(alltopten,sum)>0],names))
+counts <- table(topten)
+barplot(sort(counts),las=3)
+barplot(sort(counts[counts>1]),las=3)
+
+indet <- read.csv("indet.csv")
+land <- read.csv("landmamal_cat.csv")
+##WHY THIS?:
+landn=land$Taxon.code[land$Taxon.code %in% colnames(alldata)]
+alllandmamal <- alldata[,landn]
+ncol(alllandmamal)
+indet <- indet$Taxon.code[indet$Taxon.code %in% colnames(alldata)]
+alllandmamal <- alllandmamal[,!(colnames(alllandmamal) %in% indet)]
+ncol(alllandmamal)
+
+empty <- which(apply(alllandmamal, 1, sum) == 0 )#& apply(groupf, 1, sum) < 100 )
+```
+
+
+
+## Some Basic Analysis
+
+```{r}
+inter  <-  st_intersects(st_make_valid(grid),allsite_sf)
+grid_lim <- grid[lengths(inter)>0] 
+inter  <-  inter[lengths(inter)>0]
+
+##simple plot to show the number of sites per grid
+plot(st_bind_cols(grid_lim,len=log(lengths(inter)))[,"len"],main=paste("(log) #Site per Hexagons"))
+plot(st_bind_cols(grid_lim,len=log(apply(alllandmamal,1,function(i)sum(i>0)))),main="(log) #num taxa per Hex")
+plot(st_bind_cols(grid_lim,len=log(apply(alllandmamal,1,sum)))[,"len"],main="(log) total #nisp per Hex")
+```
+## Correspondence Analysis
+
+### Initial CA Plot
+
+```{r ca-initial}
+caGroupeF <- CA(alllandmamal[-empty, ])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
+plot(wd, add = TRUE, border = "red", lwd = 2)
+```
+
+### CA Minus Outliers
+
+```{r ca-minus-outliers}
+empty <- c(empty, which(apply(alllandmamal, 1, function(i) any(i > apply(alllandmamal[-empty, ], 2, quantile, probs = 0.95)))))
+caGroupeF <- CA(alllandmamal[-empty,])
+ca1 <- caGroupeF$row$coord[, 1]
+ca1 <- ca1 - min(ca1)  + 1
+plot(st_bind_cols(grid[-empty, ], log(ca1)), reset = FALSE, main = "CA1 minus outliers")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+```
+
+Using the percentage
+
+```{r}
+percentage <- alllandmamal[-empty,]
+tot <- apply(percentage,1,sum)
+percentage <- apply(percentage,2,function(i)i/tot)
+pca.perc <- FactoMineR::PCA(log(percentage+1))
+plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord), reset = FALSE, main = "CA1 minus outliers")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+
+```
+
+Group them
+
+```{r}
+
+indet <- read.csv("indet.csv")
+land <- read.csv("landmamal_cat.csv")
+marine <- read.csv("marinemamal_cat.csv")
+alllandmamal <- alldata[,landn]
+alllandmamal <- alldata
+ncol(alllandmamal)
+indet <- indet$Taxon.code[indet$Taxon.code %in% colnames(alldata)]
+alllandmamal <- alllandmamal[,!(colnames(alllandmamal) %in% indet)]
+ncol(alllandmamal)
+
+empty <- which(apply(alllandmamal, 1, sum) == 0 )#& apply(groupf, 1, sum) < 100 )
+groupa <- unique(land$Taxon.code.after.basic.grouping)
+
+grouped <- sapply(groupa,function(code){
+       subset <- land$Taxon.code[land$Taxon.code.after.basic.grouping == code]
+       subset  <-  subset[subset %in% colnames(alldata)]
+       apply(alldata[,subset,drop=F],1,sum)
+})
+colnames(grouped)
+
+groupb <- unique(marine$Taxon.code.after.basic.grouping)
+grouped <- cbind(grouped,sapply(groupb,function(code){
+       subset <- marine$Taxon.code[marine$Taxon.code.after.basic.grouping == code]
+       subset  <-  subset[subset %in% colnames(alldata)]
+       apply(alldata[,subset,drop=F],1,sum)
+}))
+colnames(grouped)
+
+empty <- which(apply(grouped, 1, sum) <10 )#& apply(groupf, 1, sum) < 100 )
+caGroupeF <- CA(grouped[-empty, ])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
+plot(wd, add = TRUE, border = "red", lwd = 2)
+
+caGroupeF <- CA(grouped[-empty, ])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
+plot(wd, add = TRUE, border = "red", lwd = 2)
+
+
+percentage <- grouped[-empty,]
+tot <- apply(percentage,1,sum)
+percentage <- apply(percentage,2,function(i)i/tot)
+pca.perc <- FactoMineR::PCA(percentage)
+plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1:4]), reset = FALSE, main = "CA1 minus outliers")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+
+empty <- c(empty, which(apply(groupf, 1, function(i) any(i > apply(groupf[-empty, ], 2, quantile, probs = 0.95)))))
+caGroupeF <- CA(grouped[-empty, ])
+plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
+plot(wd, add = TRUE, border = "red", lwd = 2)
+```
+
+```{r}
+alltopten  <- apply(grouped,1,function(line)sort(line,decreasing=T)[1:10],simplify=F)
+topten <- unlist(lapply(alltopten[sapply(alltopten,sum)>0],names))
+counts <- table(topten)
+barplot(sort(counts),las=3)
+barplot(sort(counts[counts>1]),las=3)
+```
+
