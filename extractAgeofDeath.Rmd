@@ -35,11 +35,16 @@ cat  <-  allgrave[!is.na(allgrave$AgeCategorical),]
 
 On `r format(Sys.time(), "%A, the %d of %B, %Y")`, BIAD contain a sample of `r nrow(allgrave)` individuals. Only `r nrow(noage)` individual have no information on their ages ; while `r nrow(allgrave) - nrow(noage)` have _some_ information (`r nrow(cat)` in the form of a categorical age, `r nrow(val)` as numerical value, some with both).
 
+
 ```{r}
 hist(val$AgeMax,xlim=c(0,99),col="red",breaks=20,main="Age distribution")
 hist(val$AgeMin,xlim=c(0,99),add=T,col=adjustcolor("blue",.6),breaks=20)
 legend("toprigh",legend=c("age min","age max"),fill=c(adjustcolor("blue",.6),"red"))
 hist((val$AgeMax+val$AgeMin)/2,xlim=c(0,99),col="dark green",breaks=20,main="Median Age distribution",xlab="(age min)+(age max)/2")
+subset=allgrave[!(is.na(allgrave$AgeCategorical) & (is.na(allgrave$AgeMin) & is.na(allgrave$AgeMax))),]
+write.csv(file="sampleAoD.csv",subset[sample(1:nrow(subset),size=50),c(1,3,4,5,6,7,8,9,10,11,13)],row.names=F)
+write.csv(file="sampleAoD.csv",allgrave[,size=50),c(1,3,4,5,6,7,8,9,10,11,13)],row.names=F)
+plot(allgrave$AgeMin,allgrave$AgeMax,pch=20,col=adjustcolor("black",.2),ylab="Age Max",xlab="Age Min")
 ```
 
 As one could expect, there is a high child mortality. 
@@ -161,5 +166,45 @@ When the barplot shown earlier show an overall tendancy for much larger child de
 
 ```{r,eval=F,echo=F}
 plot(phases$GMM,(allgrave$AgeMax+allgrave$AgeMin)/2,)
+library(ggplot2)
+
+# Assuming allgrave is your data frame
+ggplot(allgrave, aes(x = AgeMin, y = AgeMax)) +
+  stat_density2d(aes(fill = ..level..), geom = "polygon", color = "white") +
+  geom_point(alpha = 0.4, stroke = 0) +
+  scale_fill_viridis_c() +
+  labs(x = "Age Min", y = "Age Max") +
+  theme_minimal()
+get_density <- function(x, y, ...) {
+  dens <- MASS::kde2d(x, y, ...)
+  ix <- findInterval(x, dens$x)
+  iy <- findInterval(y, dens$y)
+  ii <- cbind(ix, iy)
+  return(dens$z[ii])
+}
+dat=allgrave[!is.na(allgrave$AgeMin) & !is.na(allgrave$AgeMax),]
+dat$density <- get_density(dat$AgeMin, dat$AgeMax, n = nrow(dat))
+ggplot(dat) + geom_point(aes(AgeMin, AgeMax, color = density)) + scale_color_viridis()
+layout_matrix = matrix(0, byrow = TRUE, nrow = 2,ncol=2)
+
+layout_matrix[2,2]=1
+layout_matrix[2,1]=2
+layout_matrix[1,2]=3
+layout_matrix[1,1]=4
+
+# Now, we apply the layout using this matrix
+lf=layout(mat = layout_matrix, widths = c(1,6), heights = c(1,6))
+par(mar=c(6,1,1,6),cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,xpd=F)
+plot(dat$AgeMin,dat$AgeMax,pch=21,bg=adjustcolor("red",.6),axes=F,ann=F,xlab="Age Min",ylab="Age Max");box()
+axis(1);mtext(side=1,line=4,"Age Min",cex=1.5)
+axis(4);mtext(side=4,line=4,"Age Max",cex=1.5)
+
+plot_density(density(dat$AgeMin)[[1]], "red", position = "left",margin_sizes=c(6,0,1,0))
+plot_density(density(dat$AgeMax), "red", position = "top",margin_sizes=c(0,1,0,6))
+par(xpd=NA)
+par(mar=c(0,0,0,0))
+plot(1,1,ann=F,axes=F,type="n")
+legend("center",fill=twocols,legend=names(twocols),title="Period",bty="n",cex=2)
+
 ```
 
