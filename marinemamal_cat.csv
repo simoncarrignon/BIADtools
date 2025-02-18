@@ -1,0 +1,17 @@
+No,Taxon code,Status,Taxon code after basic grouping,Note
+,cetaind,wild,marimam,these taxa should be grouped under one taxa - marimam (Marine mammals)
+,delpdel,wild,marimam,marimam= cetaind+delpdel+delpind+haligry+monamon+phocgro+phochis+phocind+phocoin+phocospe+phocvit+physmac+pinnind+pusahis+turstru
+,delpind,wild,marimam,
+,haligry,wild,marimam,
+,monamon,wild,marimam,
+,phocgro,wild,marimam,
+,phochis,wild,marimam,
+,phocind,wild,marimam,
+,phocoin,wild,marimam,
+,phocpho,wild,marimam,
+,phocspe,wild,marimam,
+,phocvit,wild,marimam,
+,physmac,wild,marimam,
+,pinnind,wild,marimam,
+,pusahis,wild,marimam,
+,turstru,wild,marimam,

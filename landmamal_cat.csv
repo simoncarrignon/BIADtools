@@ -1,0 +1,75 @@
+No,Taxon code,Status,Taxon code after basic grouping,Note
+2,alcealc,wild,alcealc,
+4,bisobon,wild,bisobon,
+8,bosprim,wild,bosprim,
+9,bosspec,domestic/wild,bosspec,"if possible, they should be allocated between the taxa - bostaur and bosprim, according to the ratio of definitely domestic (bostaur) and wild (bosprim) specimens in each phase/assemblage"
+10,bostaur,domestic,bostaur,
+12,canifam,domestic,canifam,
+14,canilup,wild,canilup,
+15,canispe,domestic/wild,canispe,"if possible, they should be allocated between the taxa - canifam and canilup, according to the ratio of definitely domestic (canifam) and wild (canilup) specimens in each phase/assemblage"
+16,capraeg,wild,caprawild,these taxa should be grouped under one taxon - caprawild (Capra wild species)
+19,capribe,wild,caprawild,caprawild= capraeg+capribe+caprpyr
+21,caprpyr,wild,caprawild,
+17,caprcap,wild,caprcap,
+26,cervela,wild,cervela,
+31,damadam,wild,damadam,
+33,equuasi,domestic,equspe,these taxa should be grouped under one taxon - equuspe (Equus species - all wild/domestic species)
+34,equucab,domestic,equspe,equuspe= equuasi+equucab+equufer+equuhem+equuhyd+equuspe
+35,equufer,wild,equspe,
+36,equuhem,wild,equspe,
+37,equuhyd,wild,equspe,
+38,equuspe,domestic/wild,equspe,
+40,erincon,wild,erinspe,these taxa should be grouped under one taxon - erinspe
+41,erineur,wild,erinspe,erinspe= erincon+erineur+erinrou+erinspe
+42,erinrou,wild,erinspe,
+43,erinspe,wild,erinspe,
+44,felicat,domestic,felispe,"these taxa should be grouped under one taxon - felispe (however, felicat was only found in two sites (intrusive in one), and given the chronological framework all felispe should be wild)"
+46,felisil,wild,felispe,felispe= felicat+felispe+felisil
+47,felispe,domestic/wild,felispe,
+48,gazegaz,wild,gazespe,these taxa should be grouped under one taxon - gazespe
+49,gazespe,wild,gazespe,gazespe= gazegaz+gazespe+gazesub
+50,gazesub,wild,gazespe,
+52,gulogul,wild,gulogul,
+56,lepucap,wild,lepuspe,these taxa should be grouped under one taxon - lepuspe
+57,lepueur,wild,lepuspe,lepuspe= lepucap+lepueur+lepuspe+leputim+leputol
+58,lepuspe,wild,lepuspe,
+59,leputim,wild,lepuspe,
+60,leputol,wild,lepuspe,
+61,lutrlut,wild,lutrlut,
+62,lynxlyn,wild,lynxspe,these taxa should be grouped under one taxon - lynxspe
+63,lynxpar,wild,lynxspe,lynxspe= lynxlyn+lynxpar+lynxspe
+64,lynxspe,wild,lynxspe,
+69,mammpri,wild,mammpri,
+70,martfoi,wild,martspe,these taxa should be grouped under one taxon - martspe (Martes species)
+71,martmar,wild,martspe,martspe= martfoi+martmar+martspe+martzib
+72,martspe,wild,martspe,
+73,martzib,wild,martspe,
+74,melemel,wild,melemel,
+75,musterm,wild,mustspe,these taxa should be grouped under one taxon - mustspe (Mustela species)
+76,musteve,wild,mustspe,mustspe= musterm+musteve+mustlut+mustniv+mustput+mustspe+putoput+putospe
+78,mustlut,wild,mustspe,
+79,mustniv,wild,mustspe,
+80,mustput,wild,mustspe,
+81,mustspe,wild,mustspe,
+93,putoput,wild,mustspe,
+94,putospe,wild,mustspe,
+82,oryccun,wild,oryccun,
+86,ovisamm,wild,oviswild,these taxa should be grouped under one taxon - oviswild (Ovis wild species)
+89,ovismus,wild,oviswild,oviswild= ovisamm+ovismus
+18,caprhir,domestic,oviscap,these taxa should be grouped under one taxon - oviscap (Ovis/Capra)
+87,ovisari,domestic,oviscap,oviscap= caprhir+ovisari+oviscap
+88,oviscap,domestic,oviscap,
+91,pantleo,wild,pantspe,these taxa should be grouped under one taxon - pantspe (Panthera species)
+92,pantpar,wild,pantspe,pantspe= pantleo+pantpar
+95,rangtar,wild,rangtar,
+100,rupirup,wild,rupirup,
+,saigtat,wild,saigtat,
+105,susscrd,domestic,susscrd,
+106,susscrf,wild,susscrf,
+107,susspec,domestic/wild,susspec,"if possible, they should be allocated between the taxa - susscrd and susscrf, according to the ratio of definitely domestic (susscrd) and wild (susscrf) specimens in each phase/assemblage"
+109,ursuarc,wild,ursuarc,these taxa should be grouped under one taxon - ursuarc (there are only two bones from two sites identified as ursuspe) (Ursus species)
+110,ursuspe,wild,ursuarc,ursuarc= ursuspe+ursuarc
+111,vormper,wild,vormper,
+112,vulpcor,wild,vulpspe,these taxa should be grouped under one taxon - vulpspe (Vulpes species)
+113,vulpspe,wild,vulpspe,vulpspe= vulpcor+vulpspe+vulpvul
+114,vulpvul,wild,vulpspe,
