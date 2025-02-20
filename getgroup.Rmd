@@ -6,6 +6,7 @@ output:
     pdf_document:
         number_sections: TRUE
         fig_caption: TRUE
+        toc: TRUE                   
 ---
 
 ```{r setup, include=FALSE}
@@ -22,15 +23,15 @@ for( i in 1:9){
     group  <- paste0("group_",as.roman(i))
 
     gfile  <- paste0(group,".csv")
-    gdata <- read.csv(gfile,skip=2,header=F)
+    gdata <- read.csv(gfile,skip=1,header=F)
     gdata  <- gdata[!is.na(gdata[,1]),]
-    txl=trimws(gsub("=","",gdata[-1,2]))
+    txl=trimws(gsub("=","",gdata[,2]))
     currname <- paste(group,paste0(txl,collapse=" vs "))
     cat(paste0("\n\r\n# ", currname,"\n\r\n"))
     colnames(gdata)=c("","group","list of taxons")
 
     lot  <-  apply(gdata,1,function(gpe)list(group=gpe[2],lot=split_plus(gpe[3])))
-    grouped <- sapply(lot[-1],function(group){
+    grouped <- sapply(lot,function(group){
                           taxons = group$lot[group$lot %in% colnames(alldata)]
                           apply(alldata[,taxons,drop=F],1,sum)
 })
