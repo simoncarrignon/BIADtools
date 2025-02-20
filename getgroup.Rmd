@@ -1,0 +1,73 @@
+---
+title: "PCA & CA for all Groups"
+author: ""
+date: "`r Sys.Date()`"
+output: 
+    pdf_document:
+        number_sections: TRUE
+        fig_caption: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+```
+
+```{r, results="asis"}
+alldata <- readRDS("tableTaxaPerMetasites.RDS")
+grid_lim  <- readRDS("grid_europe_lim.RDS")
+
+
+for( i in 1:9){
+
+    group  <- paste0("group_",as.roman(i))
+
+    gfile  <- paste0(group,".csv")
+    gdata <- read.csv(gfile,skip=2,header=F)
+    gdata  <- gdata[!is.na(gdata[,1]),]
+    txl=trimws(gsub("=","",gdata[-1,2]))
+    currname <- paste(group,paste0(txl,collapse=" vs "))
+    cat(paste0("\n\r\n# ", currname,"\n\r\n"))
+    colnames(gdata)=c("","group","list of taxons")
+
+    lot  <-  apply(gdata,1,function(gpe)list(group=gpe[2],lot=split_plus(gpe[3])))
+    grouped <- sapply(lot[-1],function(group){
+                          taxons = group$lot[group$lot %in% colnames(alldata)]
+                          apply(alldata[,taxons,drop=F],1,sum)
+})
+    colnames(grouped)=txl
+
+    if(ncol(grouped)==1){
+        plot(st_bind_cols(grid[, ], log10(grouped+1)), reset = FALSE, main = paste("distribution of ", currname))
+        plot(wd, add = TRUE, border = "red", lwd = 1)
+    }
+
+    else{
+        empty <- which(apply(grouped, 1, sum) <100 )
+        caGroupeF <- CA(grouped[-empty, ],graph=F)
+        caval <- NULL
+        if(is.null(dim(caGroupeF$row$coord))){
+            caval <- caGroupeF$row$coord
+        }
+        else {
+            caval <- caGroupeF$row$coord[,1]
+            cat("\n\r\n\r")
+            print(plot.CA(caGroupeF))
+            cat("\n\r\n\r")
+        }
+
+        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = paste("dim 1 of CA using raw number for", currname))
+        plot(wd, add = TRUE, border = "red", lwd = 1)
+
+        percentage <- grouped[-empty,]
+        tot <- apply(percentage,1,sum)
+        percentage <- apply(percentage,2,function(i)i/tot)
+        pca.perc <- FactoMineR::PCA(percentage,graph=F)
+        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = paste0("dim 1 of PCA using % for", currname))
+        plot(wd, add = TRUE, border = "red", lwd = 1)
+            cat("\n\r\n\r")
+        print(plot.PCA(pca.perc,choix="var"))
+            cat("\n\r\n\r")
+    }
+}
+```
+

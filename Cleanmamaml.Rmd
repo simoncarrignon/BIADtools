@@ -85,10 +85,11 @@ Group them
 ```{r}
 
 indet <- read.csv("indet.csv")
-land <- read.csv("landmamal_cat.csv")
+land <- read.csv("land_mammals.csv")
 marine <- read.csv("marinemamal_cat.csv")
+marine <- read.csv("marine_mammals.csv")
 alllandmamal <- alldata[,landn]
-alllandmamal <- alldata
+#alllandmamal <- alldata
 ncol(alllandmamal)
 indet <- indet$Taxon.code[indet$Taxon.code %in% colnames(alldata)]
 alllandmamal <- alllandmamal[,!(colnames(alllandmamal) %in% indet)]
@@ -113,6 +114,8 @@ grouped <- cbind(grouped,sapply(groupb,function(code){
 colnames(grouped)
 
 empty <- which(apply(grouped, 1, sum) <10 )#& apply(groupf, 1, sum) < 100 )
+empty <- which(apply(grouped, 1, sum) <10 & lengths(inter) < 3)
+empty <- which(apply(grouped, 1, sum) <500 )
 caGroupeF <- CA(grouped[-empty, ])
 plot(st_bind_cols(grid[-empty, ], caGroupeF$row$coord[, 1]), reset = FALSE, main = paste("CA1", Namef))
 plot(wd, add = TRUE, border = "red", lwd = 2)
@@ -127,6 +130,13 @@ tot <- apply(percentage,1,sum)
 percentage <- apply(percentage,2,function(i)i/tot)
 pca.perc <- FactoMineR::PCA(percentage)
 plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1:4]), reset = FALSE, main = "CA1 minus outliers")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+
+par(mfrow=c(1,2))
+plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = "CA1 ")
+plot(wd, add = TRUE, border = "red", lwd = 2)
+dev.new()
+plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,2]), reset = FALSE, main = "CA2")
 plot(wd, add = TRUE, border = "red", lwd = 2)
 
 empty <- c(empty, which(apply(groupf, 1, function(i) any(i > apply(groupf[-empty, ], 2, quantile, probs = 0.95)))))
