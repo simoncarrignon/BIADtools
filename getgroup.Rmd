@@ -21,7 +21,6 @@ grid_lim  <- readRDS("grid_europe_lim.RDS")
 for( i in 1:9){
 
     group  <- paste0("group_",as.roman(i))
-
     gfile  <- paste0(group,".csv")
     gdata <- read.csv(gfile,skip=1,header=F)
     gdata  <- gdata[!is.na(gdata[,1]),]
@@ -32,9 +31,9 @@ for( i in 1:9){
 
     lot  <-  apply(gdata,1,function(gpe)list(group=gpe[2],lot=split_plus(gpe[3])))
     grouped <- sapply(lot,function(group){
-                          taxons = group$lot[group$lot %in% colnames(alldata)]
-                          apply(alldata[,taxons,drop=F],1,sum)
-})
+                      taxons = group$lot[group$lot %in% colnames(alldata)]
+                      apply(alldata[,taxons,drop=F],1,sum)
+    })
     colnames(grouped)=txl
 
     if(ncol(grouped)==1){
@@ -51,23 +50,31 @@ for( i in 1:9){
         }
         else {
             caval <- caGroupeF$row$coord[,1]
-            cat("\n\r\n\r")
             print(plot.CA(caGroupeF))
             cat("\n\r\n\r")
         }
 
-        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = paste("dim 1 of CA using raw number for", currname))
+        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = NULL)
         plot(wd, add = TRUE, border = "red", lwd = 1)
+        mtext( paste0("dim 1 CA using raw number\n", currname),3,-1,cex=.8,font=2)
+            cat("\n\r\n\r")
 
         percentage <- grouped[-empty,]
         tot <- apply(percentage,1,sum)
         percentage <- apply(percentage,2,function(i)i/tot)
         pca.perc <- FactoMineR::PCA(percentage,graph=F)
-        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = paste0("dim 1 of PCA using % for", currname))
+        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = NULL)
         plot(wd, add = TRUE, border = "red", lwd = 1)
+        mtext( paste0("dim 1 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
+        if(ncol(pca.perc$ind$coord)>1){
             cat("\n\r\n\r")
+            plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,2]), reset = FALSE, main = NULL)
+            plot(wd, add = TRUE, border = "red", lwd = 1)
+            mtext( paste0("dim 2 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
+        }
+        cat("\n\r\n\r")
         print(plot.PCA(pca.perc,choix="var"))
-            cat("\n\r\n\r")
+        cat("\n\r\n\r")
     }
 }
 ```
