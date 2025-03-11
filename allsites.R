@@ -1,5 +1,6 @@
 source("../BIADwiki/R/functions.R")
 source("../BIADwiki/R/functions.database.connect.R")
+library(sf)
 conn  <-  init.conn()
 
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM SITES")
