@@ -15,16 +15,17 @@ periods=read.csv("periods.csv")
 grouping=strsplit(periods$PeriodID,"\\+")
 names(grouping)= periods$Period
 corresp = unlist(lapply(names(grouping),function(e){names(grouping[[e]])=grouping[[e]];grouping[[e]][]=e;grouping[[e]]}))
+togethr=list()
 for( subperiod in periods$Period){
 alldata <- readRDS(paste0(subperiod,"_tableTaxaPerMetasites.RDS"))
 #grid_lim  <- readRDS("grid_europe_lim.RDS")
 
+    togethr[[subperiod]]=list()
 print(subperiod)
     cat(paste0("\n\r\n# ", subperiod,"\n\r\n"))
 
 for( i in 1:9){
     print(i)
-
     group  <- paste0("group_",as.roman(i))
     gfile  <- paste0(group,".csv")
     gdata <- read.csv(gfile,skip=1,header=F)
@@ -33,6 +34,7 @@ for( i in 1:9){
     currname <- paste(group,paste0(txl,collapse=" vs "))
     cat(paste0("\n\r\n## ", currname,"\n\r\n"))
     colnames(gdata)=c("","group","list of taxons")
+    togethr[[subperiod]][[i]]=apply(grouped,2,sum)
 
     lot  <-  apply(gdata,1,function(gpe)list(group=gpe[2],lot=split_plus(gpe[3])))
     grouped <- sapply(lot,function(group){
@@ -46,43 +48,52 @@ for( i in 1:9){
         plot(wd, add = TRUE, border = "red", lwd = 1)
     }
 
-    else{
-        empty <- which(apply(grouped, 1, sum) <100 )
-        caGroupeF <- CA(grouped[-empty, ],graph=F)
-        caval <- NULL
-        if(is.null(dim(caGroupeF$row$coord))){
-            caval <- caGroupeF$row$coord
-        }
-        else {
-            caval <- caGroupeF$row$coord[,1]
-            print(plot.CA(caGroupeF))
-            cat("\n\r\n\r")
-        }
-
-        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = NULL)
-        plot(wd, add = TRUE, border = "red", lwd = 1)
-        mtext( paste0("dim 1 CA using raw number\n", currname),3,-1,cex=.8,font=2)
-            cat("\n\r\n\r")
-
-        percentage <- grouped[-empty,]
-        tot <- apply(percentage,1,sum)
-        percentage <- apply(percentage,2,function(i)i/tot)
-        pca.perc <- FactoMineR::PCA(percentage,graph=F)
-        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = NULL)
-        plot(wd, add = TRUE, border = "red", lwd = 1)
-        mtext( paste0("dim 1 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
-        if(ncol(pca.perc$ind$coord)>1){
-            cat("\n\r\n\r")
-            plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,2]), reset = FALSE, main = NULL)
-            plot(wd, add = TRUE, border = "red", lwd = 1)
-            mtext( paste0("dim 2 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
-        }
-        cat("\n\r\n\r")
-        print(plot.PCA(pca.perc,choix="var"))
-        cat("\n\r\n\r")
-    }
+#    else{
+#        empty <- which(apply(grouped, 1, sum) <100 )
+#        caGroupeF <- CA(grouped[-empty, ],graph=F)
+#        caval <- NULL
+#        if(is.null(dim(caGroupeF$row$coord))){
+#            caval <- caGroupeF$row$coord
+#        }
+#        else {
+#            caval <- caGroupeF$row$coord[,1]
+#            print(plot.CA(caGroupeF))
+#            cat("\n\r\n\r")
+#        }
+#
+#        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = NULL)
+#        plot(wd, add = TRUE, border = "red", lwd = 1)
+#        mtext( paste0("dim 1 CA using raw number\n", currname),3,-1,cex=.8,font=2)
+#            cat("\n\r\n\r")
+#
+#        percentage <- grouped[-empty,]
+#        tot <- apply(percentage,1,sum)
+#        percentage <- apply(percentage,2,function(i)i/tot)
+#        pca.perc <- FactoMineR::PCA(percentage,graph=F)
+#        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = NULL)
+#        plot(wd, add = TRUE, border = "red", lwd = 1)
+#        mtext( paste0("dim 1 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
+#        if(ncol(pca.perc$ind$coord)>1){
+#            cat("\n\r\n\r")
+#            plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,2]), reset = FALSE, main = NULL)
+#            plot(wd, add = TRUE, border = "red", lwd = 1)
+#            mtext( paste0("dim 2 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
+#        }
+#        cat("\n\r\n\r")
+#        print(plot.PCA(pca.perc,choix="var"))
+#        cat("\n\r\n\r")
+#    }
 }
 }
+
+
+allgroup_time <- sapply(1:9,function(o)t(do.call("rbind",lapply(togethr,function(i)i[[o]]))))
+
+for(g in 1:9){
+barplot(apply(allgroup_time[[g]],2,function(i)i/sum(i)),legend=T,main=paste0("group",g))
+}
+
+
 ```
 
 
