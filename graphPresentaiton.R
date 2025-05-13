@@ -68,6 +68,8 @@ plot(st_sf(grid_lim,len=lengths(inter))[,"len"],main="#Site per Hexagons",pal=vi
 plot(st_geometry(wdsimpl),add=T,lwd=2)
 dev.off()
 
+ alldata <- readRDS(paste0("tableTaxaPerMetasites.RDS"))
+
 png("aoi_num_tax_hexagon.png",width=1600,height=1300,pointsize=22)
 par(bg=adjustcolor("light blue",.2),mar=c(1,1,1,1))
 plot(st_sf(grid_lim,len=apply(alldata,1,function(i)sum(i>0))),main=" #num taxa per Hex",pal=viridis::cividis,reset=F,logz=T)
@@ -216,48 +218,11 @@ for( subperiod in periods$Period){
     colnames(grouped)=txl
     togethr[[subperiod]]=apply(grouped,2,sum)
 
-
-    empty <- which(apply(grouped, 1, sum) <100 )
-        caGroupeF <- CA(grouped[-empty, ],graph=F)
-        caval <- NULL
-        vu <- rep(NA,length(grid_lim))
-        caval <- caGroupeF$row$coord[,1]
-        vu[-empty]=caval
-        png(paste0(tolower(gsub(" ","_",subperiod)),"CA_dim1_",groups[[gn]],".png"),width=1000,height=1000,pointsize=32)
-        par(bg=adjustcolor("light blue",.2),oma=c(1,1,2,1))
-        plot(st_sf(grid_lim[, ], vu), reset = FALSE, main = NULL,pal=viridis::viridis,key.length=.5,cex.axis=.7)
-        plot(wdsimpl,add=T,lwd=2,col="white")
-        plot(st_sf(grid_lim[-empty, ], caval), add = TRUE, main = NULL,pal=viridis::viridis)
-        plot(st_geometry(wdsimpl),add=T,lwd=2)
-        mtext( paste0(subperiod,"\n",group," - dim 1 CA count for:\n", currname),3,-1,cex=.8,font=2,outer=T)
-        dev.off()
-
-#        plot(st_bind_cols(grid[-empty, ], caval), reset = FALSE, main = NULL)
-#        plot(wd, add = TRUE, border = "red", lwd = 1)
-#        mtext( paste0("dim 1 CA using raw number\n", currname),3,-1,cex=.8,font=2)
-#            cat("\n\r\n\r")
-#
-#        percentage <- grouped[-empty,]
-#        tot <- apply(percentage,1,sum)
-#        percentage <- apply(percentage,2,function(i)i/tot)
-#        pca.perc <- FactoMineR::PCA(percentage,graph=F)
-#        plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,1]), reset = FALSE, main = NULL)
-#        plot(wd, add = TRUE, border = "red", lwd = 1)
-#        mtext( paste0("dim 1 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
-#        if(ncol(pca.perc$ind$coord)>1){
-#            cat("\n\r\n\r")
-#            plot(st_bind_cols(grid[-empty, ], pca.perc$ind$coord[,2]), reset = FALSE, main = NULL)
-#            plot(wd, add = TRUE, border = "red", lwd = 1)
-#            mtext( paste0("dim 2 of PCA using % for\n", currname),3,-1,cex=.8,font=2)
-#        }
-#        cat("\n\r\n\r")
-#        print(plot.PCA(pca.perc,choix="var"))
-#        cat("\n\r\n\r")
-#    }
-}
 }
 
-spt=do.call("rbind",togethr[c(1,3,2,4)])
+png("bytime.png",width=1600,height=1600,pointsize=32)
+spt=do.call("rbind",togethr)
 par(mar=c(8,4,2,2))
 a=barplot(apply(spt,1,function(i)i/sum(i)),las=3,cex.names=1,border=0,col=palette.colors(n=8,alpha=.8,pal="Pastel 2"),ylab="% NISP",legend=T,args.legend=list(bg="white",x="bottomright"))
-mtext(paste0("N=",prettyNum(apply(apply(spt,1,function(i)i),2,sum))),at=a,3,1)
+mtext(paste0("N = ",prettyNum(apply(apply(spt,1,function(i)i),2,sum),big.mark=",")," nisp"),at=a,3,1)
+dev.off()
