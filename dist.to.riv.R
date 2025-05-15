@@ -1,30 +1,28 @@
 
 
+#Get biad sites  and rivers
 conn <- init.conn()
 allsites  <-  query.database(conn = conn,sql.command = "SELECT * FROM Sites")
 rivers  <- st_read("rivers_europe_37253.shp")
-allsite_sf <- st_as_sf(allsites, coords = c("Longitude", "Latitude"), crs =st_crs(world))
-distmin <- lapply(1:nrow(allsite <- sf),function(i){cat(paste0(i,"/",nrow(allsite <- sf),"\r"));min(st <- distance(allsite <- sf[i,],rivers))})
-alldist=unlist(distmin)
-alldist[alldist<10]=10
-polurive <- st_convex_hull(st_union(st_geometry(rivers)))
-st_crs(polurive)
-st_crs()
-plot(st_geometry(overlap),add=T)
+
+#merges things
 river_outline <- st_concave_hull(st_union(st_geometry(rivers)),ratio=.1)
 overlap <- st_intersection(allsite_sf,river_outline)
 overlap_land<-st_intersection(world,river_outline)
 overlap<-st_intersection(allsite_sf,overlap_land)
 
+# plot mergin exercices
 par(mfrow=c(1,1))
 plot(st_geometry(st_union(overlap_land)),col=adjustcolor("green",.4))
 plot(river_outline,add=T)
 plot(st_geometry(rivers),add=T,lwd=.3)
 plot(st_geometry(overlap),add=T,col="red",pch=20,cex=.4)
 
+# randomly sample
 randsamp=st_sample(st_union(overlap_land),nrow(overlap))
 plot(st_geometry(randsamp),col="black",add=T,pch=21,bg=adjustcolor("blue",.6),cex=.4,lwd=.3)
 
+# compute distance to all river, take the min
 cl<-makeCluster(20,outfile="log.txt")
 distsamp <- parLapply(cl,1:length(randsamp),function(i,overlap,rivers){cat(paste0(i,"/",length(overlap),"\r"));min(sf::st_distance(overlap[i,],rivers))},overlap=randsamp,rivers=rivers)
 print("done")
@@ -38,6 +36,7 @@ alldistmin=unlist(distmin)
 alldistmin[alldistmin<10]=10
 saveRDS(file="distances.RDS",list(data=alldistmin,sample=alldistsamp))
 
+# a few graph to show things
 png("distrib.png",width=1200jj)
 par(mfrow=c(1,3))
 logdensdat=density(log10(alldistmin),bw=0.2,from=1,to=6)
