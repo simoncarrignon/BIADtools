@@ -1,5 +1,6 @@
 This gather a few tools I developped around the BIAD database.
-The main one being a shiny app.
+The main one being a shiny app that hhas been move in a cleaner git here:https://github.com/BIADcore/BIADminishiny
+
 
 ## Shiny App:
 
